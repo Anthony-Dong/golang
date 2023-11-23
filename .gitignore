@@ -1,0 +1,9 @@
+/bin
+.DS_Store
+/.idea
+*.log
+/test
+/vendor
+/cover.out
+*.pcap
+*.console

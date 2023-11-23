@@ -1,0 +1,4 @@
+- include: "ginex.yaml"
+  vars:
+    SERVICE: "github.search.admin"
+    REPO: "github.com/github/search_admin"

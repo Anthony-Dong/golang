@@ -1,0 +1,5 @@
+- include: "ginex.yaml"
+  vars:
+    SERVICE: "github.search.api"
+    REPO: "github.com/github/search_api"
+    DEBUG: 1

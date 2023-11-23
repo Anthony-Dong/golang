@@ -1,0 +1,22 @@
+- include: "sd.yaml" # include sd.yaml 配置
+  vars:
+    PORT: 9999 #ginex 服务的端口是9999
+- name: "启动 {{ .SERVICE }} 服务"
+  cmd: "devtool"
+  dir: "{{ .HOME }}/go/src/{{ .REPO }}" # HOME 为全局变量默认是用户根路径
+  env:
+    - "SSO_DEBUG_USER={{ .USERNAME }}"
+    - "LOAD_SERVICE={{ .SERVICE }}"
+  args:
+    - "go"
+    - "run"
+    - '{{ IF .DEBUG "1" "--debug" "-" }}' # 通过IF表达式来动态注入--debug参数
+    - "--run"
+    - "."
+    - "--"
+    - "-service={{ .SERVICE }}"
+    - "-conf-dir=conf"
+    - "-log-dir=log"
+  vars:
+    DEBUG: 0 # 默认是0表示禁止DEBUG
+    USERNAME: "xiaoming" # 默认是xiaoming

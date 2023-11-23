@@ -1,0 +1,17 @@
+- name: "注册 {{ .SERVICE }} 服务" # 任务名称，其中 {{ .XXX }} 模版表达式，使用的是Go语言的自带的模版
+  cmd: "sd" # 命令名称
+  daemon: true # 表示后台运行这个程序，当整个程序组结束时会kill掉此进程的
+  args:
+    - "consul"
+    - "--service"
+    - "{{ .SERVICE }}"
+    - "--env"
+    - "{{ .ENV }}"
+    - "--cluster"
+    - "{{ .CLUSTER }}"
+    - "--port"
+    - "{{ .PORT }}"
+  vars: # 模版变量
+    ENV: "dev_xiaoming"
+    CLUSTER: "default"
+    PORT: 10086
