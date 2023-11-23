@@ -3,9 +3,13 @@ name: Pull Request Check
 on: [ pull_request ]
 
 jobs:
-  test:
-    name: test & compile
+  build_test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goarch: amd64
+            goos: linux
     steps:
       - uses: actions/checkout@v2
       - name: Set up Go
@@ -13,13 +17,15 @@ jobs:
         with:
           go-version: '1.17'
       - name: Apt Install ...
-        run: sudo apt-get update; sudo apt-get install libpcap-dev
+        run: sudo apt-get update; sudo apt-get install libpcap-dev # install libpcap for gopcap-sdk
       - name: Show Project ...
         run: ls -al
-      - name: Go Test ...
+      - name: Compile
+        run: make build
+      - name: Test
         run: make test
-  golangci_sdk:
-    name: lint go-sdk
+  golangci_lint:
+    name: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -28,14 +34,3 @@ jobs:
         with:
           # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
           version: v1.41.1
-  golangci_gtool:
-    name: lint gtool
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
-          version: v1.41.1
-          working-directory: gtool
