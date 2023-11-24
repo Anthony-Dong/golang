@@ -63,11 +63,11 @@ func (t *thriftClient) Send(ctx context.Context, req *Request) (*Response, error
 
 	instance := req.Instance
 
-	// 获取用户请求地址的集群信息，主要原因是因为mesh这边会根据ip是否匹配集群，来确定流量规则，如果不匹配是不会携带mesh的token从而导致服务鉴定失败，前提是下游开启了服务鉴定！
-
 	reqStart := time.Now()
 	response, err := client.GenericCall(ctx, req.Method, utils.Bytes2String(req.Body))
-
+	if err != nil {
+		return nil, err
+	}
 	return &Response{
 		TotalSpend: time.Now().Sub(start),
 		Spend:      time.Now().Sub(reqStart),

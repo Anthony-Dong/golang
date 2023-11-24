@@ -13,7 +13,6 @@ var (
 	// todo: 目前移除了全部的注解，如果有额外需求，保留一些注解，可能需要把 \w+\.\w+ 改成 字符组的方式.
 	_thriftApiMethodRegexp = regexp.MustCompile(`\((\s*\w+\.\w+\s*=\s*(".+"|'.+')\s*,?\s*)+\)`)
 	_thriftHashMapRegexp   = regexp.MustCompile(`(hash_map)(\s*<[\w\s._,<>]+>)`)
-	//apiMethodRegexp = regexp.MustCompile(`\(\s*api\.(post|get|put|delete|patch)\s*=\s*("\S+"|'\S+')\s*\)`)
 )
 
 func ParseThrift(filename string, content string) (*parser.Thrift, error) {

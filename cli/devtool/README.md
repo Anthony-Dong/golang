@@ -79,7 +79,7 @@ sudo apt-get install -y libpcap-dev
 2. 读取 `$HOME/.devtool/config.yaml`  
 3. 读取 `$(pwd)/.devtool.yaml`
 
-类型定义：[config.go](../command/config.go)
+类型定义：[config.go](../../command/config.go)
 
 # 工具介绍
 
