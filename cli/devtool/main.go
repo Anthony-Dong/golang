@@ -6,6 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/anthony-dong/golang/command/turl"
+
 	"github.com/anthony-dong/golang/command/gotool"
 
 	"github.com/anthony-dong/golang/command"
@@ -94,6 +96,9 @@ func NewCmd() (*cobra.Command, error) {
 		return nil, err
 	}
 	if err := utils.AddCmd(cmd, gotool.NewCommand); err != nil {
+		return nil, err
+	}
+	if err := utils.AddCmd(cmd, turl.NewTurlCommand); err != nil {
 		return nil, err
 	}
 	return cmd, nil

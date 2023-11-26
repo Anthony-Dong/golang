@@ -29,15 +29,13 @@ func NewFields(sStruct *descriptor.StructDescriptor) []*Field {
 }
 
 var basicTypeMap = map[descriptor.Type]bool{
-	descriptor.BOOL: true,
-	descriptor.BYTE: true,
-	//descriptor.I08:true,
+	descriptor.BOOL:   true,
+	descriptor.BYTE:   true,
 	descriptor.DOUBLE: true,
 	descriptor.I16:    true,
 	descriptor.I32:    true,
 	descriptor.I64:    true,
 	descriptor.STRING: true,
-	//descriptor.UTF7: true,
 }
 
 func GetExampleValue(tType *descriptor.TypeDescriptor, walk map[*descriptor.StructDescriptor]bool, op *Option) interface{} {
@@ -113,15 +111,13 @@ func NewFixedGenerator() *fixedGenerator {
 }
 
 var fixedTypeInstanceMap = map[descriptor.Type]interface{}{
-	descriptor.BOOL: false,
-	descriptor.BYTE: byte(1),
-	//descriptor.I08:true,
+	descriptor.BOOL:   false,
+	descriptor.BYTE:   byte(1),
 	descriptor.DOUBLE: float64(0),
 	descriptor.I16:    int16(0),
 	descriptor.I32:    int32(0),
 	descriptor.I64:    int64(0),
 	descriptor.STRING: "",
-	//descriptor.UTF7: true,
 }
 
 func (f *fixedGenerator) Instance(t descriptor.Type) interface{} {

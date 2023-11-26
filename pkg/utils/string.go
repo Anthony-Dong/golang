@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"encoding"
 	"encoding/json"
 	"fmt"
@@ -230,4 +231,12 @@ func TrimRightSpace(str string) string {
 	return strings.TrimRightFunc(str, func(r rune) bool {
 		return unicode.IsSpace(r)
 	})
+}
+
+func PrettyJson(src string) string {
+	out := bytes.Buffer{}
+	if err := json.Indent(&out, []byte(src), "", "    "); err != nil {
+		return ""
+	}
+	return out.String()
 }

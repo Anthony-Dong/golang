@@ -6,23 +6,16 @@ import (
 	"time"
 )
 
-type IDLType string
-
-const (
-	IDLTypeLocal IDLType = "local"
-)
-
 type Request struct {
-	Service  string          `json:"service,omitempty"`
-	Method   string          `json:"method,omitempty"`
-	Body     json.RawMessage `json:"body,omitempty"`
-	Instance Instance        `json:"instance,omitempty"`
-	IDLType  IDLType         `json:"idl_type,omitempty"`
-	MainIDL  string          `json:"main_idl,omitempty"`
+	Service  string          `json:"service,omitempty"`  // service name
+	Method   string          `json:"method,omitempty"`   // rpc service method
+	Body     json.RawMessage `json:"body,omitempty"`     // request body
+	Endpoint Endpoint        `json:"endpoint,omitempty"` // request endpoint
 }
 
-type Instance struct {
-	Host string `json:"host"`
+type Endpoint struct {
+	Addr string            `json:"addr,omitempty"`
+	Tag  map[string]string `json:"tag,omitempty"` // custom env/cluster
 }
 
 type Response struct {
@@ -33,8 +26,8 @@ type Response struct {
 }
 
 type ResponseExtra struct {
-	Instance
-	MetaInfo map[string]string `json:"meta_info"`
+	Endpoint
+	MetaInfo map[string]string `json:"meta_info,omitempty"`
 }
 
 type Method struct {

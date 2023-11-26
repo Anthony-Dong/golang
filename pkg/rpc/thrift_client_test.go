@@ -5,29 +5,32 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/anthony-dong/golang/pkg/idl"
+
 	"github.com/anthony-dong/golang/pkg/utils"
 )
 
 func Test_ThriftClient(t *testing.T) {
 	return
-	client := NewThriftClient()
+	// local test
+	mainIdl := filepath.Join(utils.GetGoProjectDir(), "pkg/idl/test/api.thrift")
+	client := NewThriftClient(idl.NewLocalIDLProvider(mainIdl))
 	ctx := context.Background()
 	req := &Request{
-		Service:  "xxx.xxx.xxx",
-		Method:   "RPCAPI1",
-		IDLType:  IDLTypeLocal,
-		MainIDL:  filepath.Join("", "pkg/idl/test/thrift/rpc/rpc_api.thrift"),
-		Body:     []byte(`{}`),
-		Instance: Instance{
-			//Host: "10.37.10.60:8888",
+		Service: "TestServiceName",
+		Method:  "RPCAPI1",
+		Body:    []byte(`{"Field1": "success"}`),
+		Endpoint: Endpoint{
+			Addr: "127.0.0.1:8888",
 		},
 	}
-	code, err := client.ExampleCode(ctx, req)
+	example, err := client.ExampleCode(ctx, req)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(code)
+	t.Logf("example code: %s\n", example)
 
+	req.Body = []byte(example)
 	send, err := client.Send(ctx, req)
 	if err != nil {
 		t.Fatal(err)

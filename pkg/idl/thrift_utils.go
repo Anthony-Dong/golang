@@ -10,7 +10,6 @@ import (
 )
 
 var (
-	// todo: 目前移除了全部的注解，如果有额外需求，保留一些注解，可能需要把 \w+\.\w+ 改成 字符组的方式.
 	_thriftApiMethodRegexp = regexp.MustCompile(`\((\s*\w+\.\w+\s*=\s*(".+"|'.+')\s*,?\s*)+\)`)
 	_thriftHashMapRegexp   = regexp.MustCompile(`(hash_map)(\s*<[\w\s._,<>]+>)`)
 )
@@ -21,7 +20,7 @@ func ParseThrift(filename string, content string) (*parser.Thrift, error) {
 
 func _fixThriftIDLForKitex(idlContent string) string {
 	idlContent = _thriftApiMethodRegexp.ReplaceAllString(idlContent, "")
-	return _thriftHashMapRegexp.ReplaceAllString(idlContent, "map$2") // 修复kitex不支持hash_map
+	return _thriftHashMapRegexp.ReplaceAllString(idlContent, "map$2") // kitex不支持hash_map
 }
 
 func fixThriftIDLForKitex(idls map[string]string) map[string]string {
