@@ -23,7 +23,7 @@ func NewTurlCommand() (*cobra.Command, error) {
 		Short: "Send thrift request like curl",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
-			client := rpc.NewThriftClient(idl.NewLocalIDLProvider(mainIDL))
+			client := rpc.NewThriftClient(idl.NewDescriptorProvider(idl.NewMemoryIDLProvider(mainIDL)))
 			for _, tag := range tags {
 				k, v := utils.ReadKVByColon(tag)
 				if k != "" {

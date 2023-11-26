@@ -4,38 +4,35 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/cloudwego/kitex/pkg/generic"
-
 	"github.com/anthony-dong/golang/pkg/utils"
 
 	"github.com/cloudwego/thriftgo/parser"
 )
 
-var _ MemoryIDLProvider = (*localIDLProvider)(nil)
-var _ ThriftIDLProvider = (*localIDLProvider)(nil)
-var _ DescriptorProvider = (*localIDLProvider)(nil)
+var _ MemoryIDLProvider = (*defaultMemoryIDLProvider)(nil)
+var _ ThriftIDLProvider = (*defaultMemoryIDLProvider)(nil)
 
-type localIDLProvider struct {
+type defaultMemoryIDLProvider struct {
 	Main string
 
 	idls map[string]string
 	ast  *parser.Thrift
 }
 
-func NewLocalIDLProvider(main string) *localIDLProvider {
-	return &localIDLProvider{
+func NewMemoryIDLProvider(main string) *defaultMemoryIDLProvider {
+	return &defaultMemoryIDLProvider{
 		Main: main,
 	}
 }
 
-func (t *localIDLProvider) addIDL(filename string, content string) {
+func (t *defaultMemoryIDLProvider) addLocalIDL(filename string, content string) {
 	if t.idls == nil {
 		t.idls = map[string]string{}
 	}
 	t.idls[filename] = content
 }
 
-func (t *localIDLProvider) lookup() error {
+func (t *defaultMemoryIDLProvider) lookup() error {
 	if err := t.init(); err != nil {
 		return err
 	}
@@ -47,7 +44,7 @@ func (t *localIDLProvider) lookup() error {
 	return nil
 }
 
-func (t *localIDLProvider) MemoryIDL() (*MemoryIDL, error) {
+func (t *defaultMemoryIDLProvider) MemoryIDL() (*MemoryIDL, error) {
 	if err := t.lookup(); err != nil {
 		return nil, err
 	}
@@ -57,14 +54,14 @@ func (t *localIDLProvider) MemoryIDL() (*MemoryIDL, error) {
 	}, nil
 }
 
-func (t *localIDLProvider) ThriftIDL() (*parser.Thrift, error) {
+func (t *defaultMemoryIDLProvider) ThriftIDL() (*parser.Thrift, error) {
 	if err := t.lookup(); err != nil {
 		return nil, err
 	}
 	return t.ast, nil
 }
 
-func (t *localIDLProvider) parse(filename string, walk map[string]*parser.Thrift) (*parser.Thrift, error) {
+func (t *defaultMemoryIDLProvider) parse(filename string, walk map[string]*parser.Thrift) (*parser.Thrift, error) {
 	if walk == nil {
 		walk = map[string]*parser.Thrift{}
 	}
@@ -80,7 +77,7 @@ func (t *localIDLProvider) parse(filename string, walk map[string]*parser.Thrift
 		return nil, err
 	}
 	walk[filename] = ast
-	t.addIDL(filename, utils.Bytes2String(content))
+	t.addLocalIDL(filename, utils.Bytes2String(content))
 	for _, elem := range ast.Includes {
 		if elem.GetUsed() {
 			continue
@@ -102,7 +99,7 @@ func thriftAbsPath(path, includePath string) string {
 	return filepath.Join(filepath.Dir(path), includePath)
 }
 
-func (t *localIDLProvider) init() error {
+func (t *defaultMemoryIDLProvider) init() error {
 	t.idls = nil
 	t.ast = nil
 	if filepath.IsAbs(t.Main) {
@@ -114,17 +111,4 @@ func (t *localIDLProvider) init() error {
 	}
 	t.Main = abs
 	return nil
-}
-func (t *localIDLProvider) DescriptorProvider() (generic.DescriptorProvider, error) {
-	if err := t.init(); err != nil {
-		return nil, err
-	}
-	if provider, err := loadThriftDescriptorProviderV1(t.Main); err == nil {
-		return provider, nil
-	}
-	idl, err := t.MemoryIDL()
-	if err != nil {
-		return nil, err
-	}
-	return loadThriftDescriptorProviderV2(t.Main, fixThriftIDLForKitex(idl.IDLs))
 }
