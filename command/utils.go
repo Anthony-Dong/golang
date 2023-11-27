@@ -11,7 +11,7 @@ import (
 
 func ExitError(err error) {
 	if err != nil {
-		logs.StdError("[%s] exit error: %s", AppName, err.Error())
+		logs.Error("[%s] exit error: %s", AppName, err.Error())
 	}
 	os.Exit(1)
 }

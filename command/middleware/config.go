@@ -28,7 +28,7 @@ func NewInitConfigMv(config *command.AppConfig) Middleware {
 			return err
 		}
 		files = append(files, filepath.Join(utils.GetPwd(), command.AppConfigFile))
-		files = append(files, filepath.Join(utils.GetUserHomeDir(), command.UserHomeConfigFile))
+		files = append(files, filepath.Join(utils.GetUserHomeDir(), command.UserHomeAppConfigFile))
 		files = append(files, filepath.Join(filepath.Dir(executable), command.AppConfigFile))
 		for _, file := range files {
 			if err := readConfig(file, config); err == nil {
