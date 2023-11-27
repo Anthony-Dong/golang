@@ -13,7 +13,7 @@ import (
 	"github.com/anthony-dong/golang/pkg/utils"
 
 	git "github.com/sabhiram/go-gitignore"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/anthony-dong/golang/pkg/codec"
 	"github.com/anthony-dong/golang/pkg/collections"
@@ -73,7 +73,7 @@ func (c *CheckFileCanHexoResult) WriteFile() error {
 	buffer.WriteByte('\n')
 	buffer.WriteByte('\n')
 	// write content
-	buffer.Write(utils.UnsafeBytes(utils.LinesToString(c.Content)))
+	buffer.Write(utils.String2Bytes(utils.LinesToString(c.Content)))
 
 	// 写入的文件
 	data := buffer.Bytes()
@@ -346,8 +346,9 @@ func CheckFileCanHexo(fileName string, fileParentPath string) (*CheckFileCanHexo
 
 	yamlConfigContent := utils.LinesToString(yamlConfig)
 	fileConfig := new(Config)
-	err = yaml.Unmarshal(utils.UnsafeBytes(yamlConfigContent), fileConfig)
+	err = yaml.Unmarshal(utils.String2Bytes(yamlConfigContent), fileConfig)
 	if err != nil {
+		logs.Error("yaml content: %q", yamlConfigContent)
 		return nil, err
 	}
 	// title为空

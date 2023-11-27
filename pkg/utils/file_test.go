@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	"math/rand"
 	"path/filepath"
 	"testing"
 
@@ -63,5 +64,18 @@ world
 			assert.Error(t, err)
 		}
 		assert.Equal(t, result, []string{"hello", "world"})
+	})
+	t.Run("prefix", func(t *testing.T) {
+		line1 := RandString(rand.Intn(4096))
+		line2 := RandString(4096 + rand.Intn(4096))
+		line3 := RandString(4096*2 + rand.Intn(4096))
+		lines := make([]string, 0)
+		if err := ReadLineByFunc(bytes.NewBufferString(line1+"\n"+line2+"\n"+line3+"\n"+"1"+"\n"), func(line string) error {
+			lines = append(lines, line)
+			return nil
+		}); err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, lines, []string{line1, line2, line3, "1"})
 	})
 }

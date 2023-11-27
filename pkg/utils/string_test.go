@@ -97,11 +97,11 @@ func TestGenerateUUID(t *testing.T) {
 }
 
 func TestUnsafeBytes(t *testing.T) {
-	assert.Equal(t, UnsafeBytes("123"), []byte("123"))
-	assert.Equal(t, UnsafeString([]byte("123")), "123")
+	assert.Equal(t, String2Bytes("123"), []byte("123"))
+	assert.Equal(t, Bytes2String([]byte("123")), "123")
 
-	assert.Equal(t, UnsafeBytes(""), []byte(nil))
-	assert.Equal(t, UnsafeString([]byte("")), "")
+	assert.Equal(t, String2Bytes(""), []byte(nil))
+	assert.Equal(t, Bytes2String([]byte("")), "")
 
 	data := []byte(nil)
 	assert.Equal(t, len(data), 0)

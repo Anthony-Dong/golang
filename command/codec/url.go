@@ -16,7 +16,7 @@ import (
 
 func ParseUrl(_src []byte) (dst []byte, err error) {
 	input := strings.TrimSpace(string(_src))
-	if decode, err := codec.NewUrlCodec().Decode(utils.UnsafeBytes(input)); err == nil {
+	if decode, err := codec.NewUrlCodec().Decode(utils.String2Bytes(input)); err == nil {
 		input = string(decode)
 	}
 	parse, err := url.Parse(input)

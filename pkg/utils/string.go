@@ -5,18 +5,16 @@ import (
 	"encoding"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
+	"unsafe"
 
 	"gopkg.in/yaml.v3"
 
 	"github.com/google/uuid"
 	"github.com/gosimple/slug"
-
-	"github.com/anthony-dong/golang/pkg/bufutils"
-
-	"github.com/anthony-dong/golang/pkg/internal/unsafe"
 )
 
 func Slug(str string) string {
@@ -28,19 +26,20 @@ func GenerateUUID() string {
 }
 
 func Bytes2String(data []byte) string {
-	return UnsafeString(data)
+	hdr := *(*reflect.SliceHeader)(unsafe.Pointer(&data))
+	return *(*string)(unsafe.Pointer(&reflect.StringHeader{
+		Data: hdr.Data,
+		Len:  hdr.Len,
+	}))
 }
 
 func String2Bytes(data string) []byte {
-	return unsafe.UnsafeBytes(data)
-}
-
-func UnsafeBytes(data string) []byte {
-	return unsafe.UnsafeBytes(data)
-}
-
-func UnsafeString(data []byte) string {
-	return unsafe.UnsafeString(data)
+	hdr := *(*reflect.StringHeader)(unsafe.Pointer(&data))
+	return *(*[]byte)(unsafe.Pointer(&reflect.SliceHeader{
+		Data: hdr.Data,
+		Len:  hdr.Len,
+		Cap:  hdr.Len,
+	}))
 }
 
 func ToString(value interface{}) string {
@@ -121,8 +120,8 @@ func NewString(elem byte, len int) string {
 	if len == 0 {
 		return ""
 	}
-	buffer := bufutils.NewBuffer()
-	defer bufutils.ResetBuffer(buffer)
+	buffer := bytes.NewBuffer(nil)
+	buffer.Grow(len)
 	for x := 0; x < len; x++ {
 		buffer.WriteByte(elem)
 	}
@@ -143,30 +142,29 @@ func ContainsString(str []string, elem string) bool {
 }
 
 func ToJsonByte(input interface{}, indent ...bool) []byte {
-	return UnsafeBytes(ToJson(input, indent...))
+	return String2Bytes(ToJson(input, indent...))
 }
 
 func ToJson(input interface{}, indent ...bool) string {
 	if len(indent) > 0 && indent[0] {
 		r, _ := json.MarshalIndent(input, "", "    ")
-		return unsafe.UnsafeString(r)
+		return Bytes2String(r)
 	} else {
 		r, _ := json.Marshal(input)
-		return unsafe.UnsafeString(r)
+		return Bytes2String(r)
 	}
 }
 
 func ToYaml(input interface{}, indent ...bool) string {
 	out, _ := yaml.Marshal(input)
-	return unsafe.UnsafeString(out)
+	return Bytes2String(out)
 }
 
 func LinesToString(lines []string) string {
 	if len(lines) == 0 {
 		return ""
 	}
-	buffer := bufutils.NewBuffer()
-	defer bufutils.ResetBuffer(buffer)
+	buffer := bytes.Buffer{}
 	max := len(lines) - 1
 	for index, elem := range lines {
 		buffer.WriteString(elem)

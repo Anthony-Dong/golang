@@ -5,8 +5,6 @@ import (
 	"bytes"
 	"io"
 	"sync"
-
-	"github.com/anthony-dong/golang/pkg/internal/unsafe"
 )
 
 var (
@@ -35,14 +33,6 @@ func NewBufferData(in []byte) *bytes.Buffer {
 	data := NewBuffer()
 	data.Write(in)
 	return data
-}
-
-func UnsafeBytes(data string) []byte {
-	return unsafe.UnsafeBytes(data)
-}
-
-func UnsafeString(data []byte) string {
-	return unsafe.UnsafeString(data)
 }
 
 func NewBufferFromReader(in io.Reader) (*bytes.Buffer, error) {

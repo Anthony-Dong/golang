@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"gopkg.in/yaml.v3"
+
 	git "github.com/sabhiram/go-gitignore"
 	"github.com/stretchr/testify/assert"
 
@@ -54,4 +56,21 @@ func TestRun(t *testing.T) {
 	if err := buildHexo(context.Background(), dir, targetDir, firmCode, nil); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestYamlUnmarshal(t *testing.T) {
+	data := "title: Maven构建工具介绍 \ndate: \"2022-11-15 20:06:04\"\ntags:\n\t- Java\ncategories:\n\t- Java\n\t- Maven"
+	fmt.Println(data)
+	data = `title: "Maven构建工具介绍" 
+date: "2022-11-15 20:06:04"
+tags:
+  - "Java"
+categories:
+  - "Java"
+  - "Maven"`
+	config := Config{}
+	if err := yaml.Unmarshal([]byte(data), &config); err != nil {
+		t.Fatal(err)
+	}
+	t.Log(config)
 }

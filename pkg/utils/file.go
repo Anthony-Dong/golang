@@ -54,34 +54,17 @@ func GetFilePrefixAndSuffix(filename string) (prefix, suffix string) {
 }
 
 // foo 不能写操作，引用需要deepcopy
-func ReadLineByFunc(file io.Reader, foo func(line string) error) error {
+func ReadLineByFunc(file io.Reader, handler func(line string) error) error {
 	if file == nil {
 		return fmt.Errorf("ReadLines find reader is nil")
 	}
-	reader := bufio.NewReader(file)
-	prefix := make([]byte, 0)
-	for {
-		line, isPrefix, err := reader.ReadLine()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return err
-		}
-		if isPrefix {
-			prefix = append(prefix, line...)
-			continue
-		}
-		if len(prefix) > 0 {
-			prefix = append(prefix, line...)
-			line = prefix
-			prefix = prefix[:0]
-		}
-		if err := foo(string(line)); err != nil {
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		if err := handler(scanner.Text()); err != nil {
 			return err
 		}
 	}
-	return nil
+	return scanner.Err()
 }
 
 func ReadLines(read io.Reader) ([]string, error) {
