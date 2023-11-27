@@ -155,7 +155,7 @@ func ToJson(input interface{}, indent ...bool) string {
 	}
 }
 
-func ToYaml(input interface{}, indent ...bool) string {
+func ToYaml(input interface{}, indent ...string) string {
 	out, _ := yaml.Marshal(input)
 	return Bytes2String(out)
 }
