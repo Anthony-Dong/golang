@@ -5,7 +5,7 @@
 devtool 是一个强大的Cli工具，其中包含了日常开发中的一些可能涉及到的高频工具，这里避免重复造轮子，所以一般就是日常用的一些工具但是市场上没有符合自己需求的，得自己写！
 
 ```shell
-➜  ~ devtool --help
+➜  devtool git:(master) devtool --help
 Usage: devtool [OPTIONS] COMMAND
 
 Commands:
@@ -17,12 +17,13 @@ Commands:
   json        The Json tool
   run         Run task templates
   tcpdump     Decode tcpdump file & stream
+  turl        Send thrift request like curl
   upload      File upload tool
 
 Options:
       --config-file string   Set the config file
   -h, --help                 help for devtool
-      --log-level string     Set the log level in [fatal|error|warn|info|debug]
+      --log-level string     Set the log level in [debug|info|notice|warn|error] (default "info")
   -v, --verbose              Turn on verbose mode
       --version              version for devtool
 

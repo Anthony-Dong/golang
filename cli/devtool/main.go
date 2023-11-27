@@ -73,7 +73,7 @@ func NewCmd() (*cobra.Command, error) {
 	cmd.SetUsageTemplate(command.UsageTmpl)
 	cmd.PersistentFlags().BoolVarP(&config.Verbose, "verbose", "v", false, "Turn on verbose mode")
 	cmd.PersistentFlags().StringVar(&config.ConfigFile, "config-file", config.ConfigFile, "Set the config file")
-	cmd.PersistentFlags().StringVar(&config.LogLevel, "log-level", "", "Set the log level in [fatal|error|warn|info|debug]")
+	cmd.PersistentFlags().StringVar(&config.LogLevel, "log-level", "info", "Set the log level in [debug|info|notice|warn|error]")
 	if err := utils.AddCmd(cmd, codec.NewCommand); err != nil {
 		return nil, err
 	}
