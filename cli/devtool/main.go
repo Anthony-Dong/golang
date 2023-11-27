@@ -29,20 +29,20 @@ import (
 func main() {
 	done := make(chan os.Signal)
 	signal.Notify(done, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGQUIT)
-	defer command.CloseDeferTask()
+	defer command.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	command.AddDeferTask(cancel)
+	command.Defer(cancel)
 
 	go func() {
 		defer close(done)
 		cmd, err := NewCmd()
 		if err != nil {
-			command.AddDeferTask(func() { command.ExitError(err) })
+			command.Defer(func() { command.ExitError(err) })
 			return
 		}
 		if err := cmd.ExecuteContext(ctx); err != nil {
-			command.AddDeferTask(func() { command.ExitError(err) })
+			command.Defer(func() { command.ExitError(err) })
 			return
 		}
 	}()

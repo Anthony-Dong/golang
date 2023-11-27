@@ -28,6 +28,14 @@ func (*defaultBinding) Bind(ctx context.Context, respBody []byte, respData inter
 	if respData == nil {
 		return nil
 	}
+	switch v := respData.(type) {
+	case *string:
+		*v = string(respBody)
+		return nil
+	case *[]byte:
+		*v = respBody
+		return nil
+	}
 	if err := json.Unmarshal(respBody, respData); err != nil {
 		return fmt.Errorf(`read response body find err. http code: %d, body: '%s'`, httpResp.StatusCode, respBody)
 	}
