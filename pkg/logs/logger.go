@@ -41,11 +41,19 @@ func SetPrinter(printer func(output string)) {
 }
 
 func SetLevelString(level string) {
-	logLevel = stringToLevel(level)
+	ll, isExist := stringLevelMap[level]
+	if !isExist {
+		return
+	}
+	logLevel = ll
 }
 
 func SelFlag(flag int) {
 	logFlag = flag
+}
+
+func LogLevel() Level {
+	return logLevel
 }
 
 func Flush() {
@@ -62,20 +70,29 @@ const (
 	LevelError
 )
 
-func stringToLevel(str string) Level {
-	switch str {
-	case "debug":
-		return LevelDebug
-	case "info":
-		return LevelInfo
-	case "notice":
-		return LevelNotice
-	case "warn":
-		return LevelWarn
-	case "error":
-		return LevelError
+var (
+	levelStringMap = map[Level]string{
+		LevelDebug:  "debug",
+		LevelInfo:   "info",
+		LevelNotice: "notice",
+		LevelWarn:   "warn",
+		LevelError:  "error",
 	}
-	return logLevel
+	stringLevelMap = map[string]Level{}
+)
+
+func init() {
+	for level, str := range levelStringMap {
+		stringLevelMap[str] = level
+	}
+}
+
+func (l Level) String() string {
+	str, isExist := levelStringMap[l]
+	if isExist {
+		return str
+	}
+	return "level-" + strconv.Itoa(int(l))
 }
 
 func IsLevel(level Level) bool {

@@ -73,32 +73,32 @@ func NewCmd() (*cobra.Command, error) {
 	cmd.SetUsageTemplate(command.UsageTmpl)
 	cmd.PersistentFlags().BoolVarP(&config.Verbose, "verbose", "v", false, "Turn on verbose mode")
 	cmd.PersistentFlags().StringVar(&config.ConfigFile, "config-file", config.ConfigFile, "Set the config file")
-	cmd.PersistentFlags().StringVar(&config.LogLevel, "log-level", "info", "Set the log level in [debug|info|notice|warn|error]")
-	if err := utils.AddCmd(cmd, codec.NewCommand); err != nil {
+	cmd.PersistentFlags().StringVar(&config.LogLevel, "log-level", "", "Set the log level in [debug|info|notice|warn|error] (default \"info\")")
+	if err := command.AddCommand(cmd, codec.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := utils.AddCmd(cmd, jsontool.NewCommand); err != nil {
+	if err := command.AddCommand(cmd, jsontool.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := utils.AddCmd(cmd, hexo.NewCommandFunc(config.HexoConfig)); err != nil {
+	if err := command.AddConfigCommand(cmd, config, hexo.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := utils.AddCmd(cmd, upload.NewCommandFunc(config.UploadConfig)); err != nil {
+	if err := command.AddConfigCommand(cmd, config, upload.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := utils.AddCmd(cmd, gen.NewCommand); err != nil {
+	if err := command.AddCommand(cmd, gen.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := utils.AddCmd(cmd, tcpdump.NewCommand); err != nil {
+	if err := command.AddCommand(cmd, tcpdump.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := utils.AddCmd(cmd, run.NewCommandFunc(config.RunTaskConfig)); err != nil {
+	if err := command.AddConfigCommand(cmd, config, run.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := utils.AddCmd(cmd, gotool.NewCommand); err != nil {
+	if err := command.AddCommand(cmd, gotool.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := utils.AddCmd(cmd, turl.NewTurlCommand); err != nil {
+	if err := command.AddCommand(cmd, turl.NewTurlCommand); err != nil {
 		return nil, err
 	}
 	return cmd, nil

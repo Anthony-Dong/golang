@@ -39,7 +39,7 @@ Global Options:
 
 ```shell
 ➜  devtool upload --file ./go.mod --decode md5
-2022/04/23 22:06:53 [INFO] [upload] start config:
+2022/04/23 22:06:53 [INFO] [upload] config:
 {
   "decode": "md5",
   "file": "/Users/bytedance/go/src/github.com/anthony-dong/golib/go.mod",
@@ -79,7 +79,7 @@ Upload:
 
 ```shell
 ➜  devtool upload -f ./go.mod --decode md5 --type pdf
-2022/04/23 22:09:30.637767 cli.go:53: [INFO] [upload] start config:
+2022/04/23 22:09:30.637767 cli.go:53: [INFO] [upload] config:
 {
   "decode": "md5",
   "file": "/Users/bytedance/go/src/github.com/anthony-dong/golib/go.mod",

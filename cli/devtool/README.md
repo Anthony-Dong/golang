@@ -77,8 +77,9 @@ sudo apt-get install -y libpcap-dev
 优先级顺序：
 
 1. 读取  `--config-file` 参数传递的配置文件地址
-2. 读取 `$HOME/.devtool/config.yaml`  
-3. 读取 `$(pwd)/.devtool.yaml`
+2. 读取 `$(pwd)/.devtool.yaml`
+3. 读取 `$HOME/.devtool/config.yaml`
+4. 读取 `dirname($0)/.devtool.yaml`
 
 类型定义：[config.go](../../command/config.go)
 
@@ -86,7 +87,7 @@ sudo apt-get install -y libpcap-dev
 
 ## [编解码工具 - codec ](../../command/codec)
 
-## [Go开发工具 - gotool](../../command/gotool) 
+## [Go开发工具 - gotool](../../command/gotool)
 
 ## [写博客工具 - hexo](../../command/hexo)
 

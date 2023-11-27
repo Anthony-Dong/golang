@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/anthony-dong/golang/command"
+
 	"github.com/anthony-dong/golang/pkg/utils"
 
 	"github.com/spf13/cobra"
@@ -13,13 +15,13 @@ import (
 
 func NewCommand() (*cobra.Command, error) {
 	cmd := &cobra.Command{Use: "gen", Short: `Auto compile thrift、protobuf IDL`}
-	if err := utils.AddCmd(cmd, newPBCmd); err != nil {
+	if err := command.AddCommand(cmd, NewProtocCommand); err != nil {
 		return nil, err
 	}
 	return cmd, nil
 }
 
-func newPBCmd() (*cobra.Command, error) {
+func NewProtocCommand() (*cobra.Command, error) {
 	var (
 		dir     string
 		gopkg   string

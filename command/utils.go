@@ -1,7 +1,10 @@
 package command
 
 import (
+	"fmt"
 	"os"
+
+	"github.com/spf13/cobra"
 
 	"github.com/anthony-dong/golang/pkg/logs"
 )
@@ -11,6 +14,27 @@ func ExitError(err error) {
 		logs.StdError("[%s] exit error: %s", AppName, err.Error())
 	}
 	os.Exit(1)
+}
+
+func AddCommand(cmd *cobra.Command, foo func() (*cobra.Command, error)) error {
+	subCmd, err := foo()
+	if err != nil {
+		return err
+	}
+	cmd.AddCommand(subCmd)
+	return nil
+}
+
+func AddConfigCommand(cmd *cobra.Command, config *AppConfig, foo func(config *AppConfig) (*cobra.Command, error)) error {
+	if config == nil {
+		return fmt.Errorf(`app config is nil`)
+	}
+	subCmd, err := foo(config)
+	if err != nil {
+		return err
+	}
+	cmd.AddCommand(subCmd)
+	return nil
 }
 
 const (

@@ -9,20 +9,10 @@ import (
 	"syscall"
 
 	"github.com/creack/pty"
-	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
 	"github.com/anthony-dong/golang/pkg/logs"
 )
-
-func AddCmd(cmd *cobra.Command, foo func() (*cobra.Command, error)) error {
-	subCmd, err := foo()
-	if err != nil {
-		return err
-	}
-	cmd.AddCommand(subCmd)
-	return nil
-}
 
 // RunCmdWithShell 会启动一个shell终端帮助命令执行! 方便进入容器内进行调试！
 func RunCmdWithShell(cmd *exec.Cmd) error {

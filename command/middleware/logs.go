@@ -16,8 +16,6 @@ func NewInitLoggerMv(config *command.AppConfig) Middleware {
 		}
 		if config.Verbose {
 			logs.SetLevel(logs.LevelDebug)
-		} else {
-			logs.SetLevel(logs.LevelInfo)
 		}
 		return nil
 	}

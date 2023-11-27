@@ -21,13 +21,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func NewCommandFunc(config command.RunTaskConfig) func() (*cobra.Command, error) {
-	return func() (*cobra.Command, error) {
-		return NewCommand(config)
-	}
-}
-
-func NewCommand(config command.RunTaskConfig) (*cobra.Command, error) {
+func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 	filename := ""
 	list := false
 	debug := false
@@ -37,9 +31,12 @@ func NewCommand(config command.RunTaskConfig) (*cobra.Command, error) {
 		Use:   "run",
 		Short: `Run task templates`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if config.RunTaskConfig == nil {
+				config.RunTaskConfig = &command.RunTaskConfig{}
+			}
 			helper := TaskRunner{}
 			includes = append(includes, utils.GetPwd())
-			if err := helper.InitIncludes(append(includes, config.Includes...)); err != nil {
+			if err := helper.InitIncludes(append(includes, config.RunTaskConfig.Includes...)); err != nil {
 				return err
 			}
 			logs.Debug("includes: %s. enable debug: %v.", utils.ToJson(helper.Includes), debug)
