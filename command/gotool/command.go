@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/anthony-dong/golang/command"
+
 	"github.com/spf13/cobra"
 
 	"github.com/anthony-dong/golang/pkg/tools"
@@ -16,10 +18,10 @@ func NewCommand() (*cobra.Command, error) {
 		Use:   "go",
 		Short: "The golang tools",
 	}
-	if err := utils.AddCmd(cmd, NewGoRunCommand); err != nil {
+	if err := command.AddCommand(cmd, NewGoRunCommand); err != nil {
 		return nil, err
 	}
-	if err := utils.AddCmd(cmd, NewGoTestCommand); err != nil {
+	if err := command.AddCommand(cmd, NewGoTestCommand); err != nil {
 		return nil, err
 	}
 	return cmd, nil

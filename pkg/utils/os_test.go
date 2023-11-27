@@ -14,3 +14,7 @@ func TestGetGoPath(t *testing.T) {
 	testPath := filepath.Join(dir, "go")
 	t.Log(testPath == "/Users/bytedance/go")
 }
+
+func TestExec(t *testing.T) {
+	t.Log(os.Executable())
+}

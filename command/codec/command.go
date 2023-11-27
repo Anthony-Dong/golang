@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/anthony-dong/golang/command"
+
 	"github.com/anthony-dong/golang/pkg/utils"
 
 	"github.com/spf13/cobra"
@@ -17,10 +19,10 @@ func NewCommand() (*cobra.Command, error) {
 		Use:   "codec",
 		Short: "The Encode and Decode data tool",
 	}
-	if err := utils.AddCmd(cmd, newThriftCodecCmd); err != nil {
+	if err := command.AddCommand(cmd, newThriftCodecCmd); err != nil {
 		return nil, err
 	}
-	if err := utils.AddCmd(cmd, newPBCodecCmd); err != nil {
+	if err := command.AddCommand(cmd, newPBCodecCmd); err != nil {
 		return nil, err
 	}
 	cmd.AddCommand(newCodecCmd("gzip", codec.NewGzipCodec()))

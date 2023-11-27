@@ -12,20 +12,12 @@ import (
 	"github.com/anthony-dong/golang/pkg/utils"
 )
 
-func NewCommandFunc(config command.HexoConfig) func() (*cobra.Command, error) {
-	return func() (*cobra.Command, error) {
-		return NewCommand(config)
-	}
-}
-
-func NewCommand(config command.HexoConfig) (*cobra.Command, error) {
+func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 	cmd := &cobra.Command{Use: "hexo", Short: "The Hexo tool"}
-	if err := utils.AddCmd(cmd, func() (*cobra.Command, error) {
-		return newBuildCmd(config)
-	}); err != nil {
+	if err := command.AddConfigCommand(cmd, config, NewBuildCmd); err != nil {
 		return nil, err
 	}
-	if err := utils.AddCmd(cmd, newReadmeCmd); err != nil {
+	if err := command.AddCommand(cmd, NewReadmeCmd); err != nil {
 		return nil, err
 	}
 	return cmd, nil
@@ -38,16 +30,19 @@ type hexoConfig struct {
 	TargetDir string   `json:"target_dir"`
 }
 
-func newBuildCmd(config command.HexoConfig) (*cobra.Command, error) {
+func NewBuildCmd(config *command.AppConfig) (*cobra.Command, error) {
 	var (
 		cfg = &hexoConfig{}
 	)
 	cmd := &cobra.Command{Use: "build", Short: "Build the markdown project to hexo"}
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		for _, elem := range config.KeyWord {
+		if config.HexoConfig == nil {
+			config.HexoConfig = &command.HexoConfig{}
+		}
+		for _, elem := range config.HexoConfig.KeyWord {
 			cfg.Keyword = append(cfg.Keyword, elem)
 		}
-		for _, elem := range config.Ignore {
+		for _, elem := range config.HexoConfig.Ignore {
 			cfg.Ignore = append(cfg.Ignore, elem)
 		}
 		if dir, err := filepath.Abs(cfg.Dir); err != nil {

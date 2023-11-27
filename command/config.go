@@ -1,33 +1,30 @@
 package command
 
 type AppConfig struct {
-	Verbose    bool
-	LogLevel   string
-	ConfigFile string
-	Config
-}
+	Verbose    bool   `yaml:"-"`
+	LogLevel   string `yaml:"-"`
+	ConfigFile string `yaml:"-"`
 
-type Config struct {
-	UploadConfig  UploadConfig  `yaml:"Upload"`
-	HexoConfig    HexoConfig    `yaml:"Hexo"`
-	RunTaskConfig RunTaskConfig `yaml:"RunTask"`
+	UploadConfig  *UploadConfig  `yaml:"Upload,omitempty"`
+	HexoConfig    *HexoConfig    `yaml:"Hexo,omitempty"`
+	RunTaskConfig *RunTaskConfig `yaml:"RunTask,omitempty"`
 }
 
 type RunTaskConfig struct {
-	Includes []string `yaml:"Includes"`
+	Includes []string `yaml:"Includes,omitempty"`
 }
 
 type UploadConfig struct {
-	Bucket map[string]OSSConfig `yaml:"Bucket"`
+	Bucket map[string]OSSConfig `yaml:"Bucket,omitempty"`
 }
 
 type OSSConfig struct {
-	AccessKeyId     string `yaml:"AccessKeyId"`
-	AccessKeySecret string `yaml:"AccessKeySecret"`
-	Endpoint        string `yaml:"Endpoint"`
-	UrlEndpoint     string `yaml:"UrlEndpoint"`
-	Bucket          string `yaml:"Bucket"`
-	PathPrefix      string `yaml:"PathPrefix"`
+	AccessKeyId     string `yaml:"AccessKeyId,omitempty"`
+	AccessKeySecret string `yaml:"AccessKeySecret,omitempty"`
+	Endpoint        string `yaml:"Endpoint,omitempty"`
+	UrlEndpoint     string `yaml:"UrlEndpoint,omitempty"`
+	Bucket          string `yaml:"Bucket,omitempty"`
+	PathPrefix      string `yaml:"PathPrefix,omitempty"`
 }
 
 type HexoConfig struct {

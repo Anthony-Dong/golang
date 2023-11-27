@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"encoding/json"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -16,17 +16,22 @@ import (
 func NewInitConfigMv(config *command.AppConfig) Middleware {
 	return func(cmd *cobra.Command, args []string) error {
 		if config.ConfigFile != "" {
-			if err := readConfig(config.ConfigFile, &config.Config); err != nil {
+			if err := readConfig(config.ConfigFile, config); err != nil {
 				return err
 			}
 			logs.Debug("init config success. filename: %s", config.ConfigFile)
 			return nil
 		}
 		files := make([]string, 0)
-		files = append(files, filepath.Join(utils.GetUserHomeDir(), command.UserHomeConfig))
-		files = append(files, filepath.Join(utils.GetPwd(), command.CurrentDirConfig))
+		executable, err := os.Executable()
+		if err != nil {
+			return err
+		}
+		files = append(files, filepath.Join(utils.GetPwd(), command.AppConfigFile))
+		files = append(files, filepath.Join(utils.GetUserHomeDir(), command.UserHomeConfigFile))
+		files = append(files, filepath.Join(filepath.Dir(executable), command.AppConfigFile))
 		for _, file := range files {
-			if err := readConfig(file, &config.Config); err == nil {
+			if err := readConfig(file, config); err == nil {
 				logs.Debug("init config success. filename: %s", file)
 				return nil
 			}
@@ -36,13 +41,10 @@ func NewInitConfigMv(config *command.AppConfig) Middleware {
 	}
 }
 
-func readConfig(filename string, cfg *command.Config) error {
+func readConfig(filename string, cfg *command.AppConfig) error {
 	content, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return err
 	}
-	if err := yaml.Unmarshal(content, cfg); err == nil {
-		return nil
-	}
-	return json.Unmarshal(content, cfg)
+	return yaml.Unmarshal(content, cfg)
 }

@@ -25,13 +25,7 @@ type uploadCommand struct {
 	DstFile        string `json:"dst_file,omitempty"`
 }
 
-func NewCommandFunc(config command.UploadConfig) func() (*cobra.Command, error) {
-	return func() (*cobra.Command, error) {
-		return NewCommand(config)
-	}
-}
-
-func NewCommand(config command.UploadConfig) (*cobra.Command, error) {
+func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 	cmd := &cobra.Command{Use: "upload", Short: `File upload tool`}
 	var (
 		cfg = &uploadCommand{}
@@ -44,7 +38,7 @@ func NewCommand(config command.UploadConfig) (*cobra.Command, error) {
 		return nil, err
 	}
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		return cfg.Run(cmd.Context(), config)
+		return cfg.Run(cmd.Context(), config.UploadConfig)
 	}
 	return cmd, nil
 }
@@ -61,14 +55,14 @@ func (c *uploadCommand) validate() error {
 	if c.OssConfigType == "" {
 		c.OssConfigType = "default"
 	}
-	logs.Info("[upload] start config:\n%s", utils.ToJson(c, true))
+	logs.Info("[upload] config:\n%s", utils.ToJson(c, true))
 	return nil
 }
-func (c *uploadCommand) Run(ctx context.Context, config command.UploadConfig) error {
+func (c *uploadCommand) Run(ctx context.Context, config *command.UploadConfig) error {
 	if err := c.validate(); err != nil {
 		return err
 	}
-	if len(config.Bucket) == 0 {
+	if config == nil || len(config.Bucket) == 0 {
 		return errors.Errorf("not found bucket config, bucket: %s", c.OssConfigType)
 	}
 	cfg, isExist := config.Bucket[c.OssConfigType]
