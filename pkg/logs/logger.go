@@ -13,15 +13,18 @@ import (
 	"github.com/fatih/color"
 )
 
-var logLevel = LevelInfo
+var logLevel Level = LevelInfo
 var logFlag = LogFlagPrefix | LogFlagColor | LogFlagTime
+var print func(output string) = func(output string) {
+	fmt.Print(output)
+}
 
 const LogFlagPrefix = 1 << 0
 const LogFlagColor = 1 << 1
 const LogFlagTime = 1 << 2
 const LogFlagCaller = 1 << 3
 
-var _levelColor = map[int]func(format string, a ...interface{}) string{
+var _levelColor = map[Level]func(format string, a ...interface{}) string{
 	LevelDebug:  color.HiBlueString,
 	LevelInfo:   color.HiCyanString,
 	LevelNotice: color.HiGreenString,
@@ -29,8 +32,12 @@ var _levelColor = map[int]func(format string, a ...interface{}) string{
 	LevelError:  color.HiRedString,
 }
 
-func SetLevel(level int) {
+func SetLevel(level Level) {
 	logLevel = level
+}
+
+func SetPrinter(printer func(output string)) {
+	print = printer
 }
 
 func SetLevelString(level string) {
@@ -45,13 +52,17 @@ func Flush() {
 
 }
 
-const LevelDebug = 0
-const LevelInfo = 1
-const LevelNotice = 2
-const LevelWarn = 3
-const LevelError = 4
+type Level uint8
 
-func stringToLevel(str string) int {
+const (
+	LevelDebug Level = iota
+	LevelInfo
+	LevelNotice
+	LevelWarn
+	LevelError
+)
+
+func stringToLevel(str string) Level {
 	switch str {
 	case "debug":
 		return LevelDebug
@@ -67,7 +78,7 @@ func stringToLevel(str string) int {
 	return logLevel
 }
 
-func IsLevel(level int) bool {
+func IsLevel(level Level) bool {
 	return level >= logLevel
 }
 
@@ -107,8 +118,11 @@ func Error(format string, v ...interface{}) {
 	logf(context.Background(), LevelError, 2, format, v...)
 }
 
-func logf(ctx context.Context, level int, cl int, format string, v ...interface{}) {
+func logf(ctx context.Context, level Level, cl int, format string, v ...interface{}) {
 	if level < logLevel {
+		return
+	}
+	if print == nil {
 		return
 	}
 	out := strings.Builder{}
@@ -147,13 +161,14 @@ func logf(ctx context.Context, level int, cl int, format string, v ...interface{
 		out.WriteString(" ")
 	}
 	out.WriteString(fmt.Sprintf(format, v...))
+	out.WriteByte('\n')
 	output := out.String()
 	if logFlag&LogFlagColor == LogFlagColor {
 		if foo := _levelColor[level]; foo != nil {
 			output = foo(out.String())
 		}
 	}
-	fmt.Println(output)
+	print(output)
 }
 
 func StdOut(format string, v ...interface{}) {

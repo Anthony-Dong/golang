@@ -7,6 +7,7 @@ require (
 	github.com/andybalholm/brotli v1.0.4
 	github.com/apache/thrift v0.13.0
 	github.com/bytedance/gopkg v0.0.0-20230728082804-614d0af6619b
+	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/cloudwego/kitex v0.5.2
 	github.com/cloudwego/thriftgo v0.2.9
 	github.com/creack/pty v1.1.21

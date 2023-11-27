@@ -44,15 +44,15 @@ func loadThriftDescriptorProviderV1(main string) (_ generic.DescriptorProvider, 
 	return provider, nil
 }
 
-func loadThriftDescriptorProviderV2(main string, idls map[string]string) (_ generic.DescriptorProvider, err error) {
+func loadThriftDescriptorProvider(main string, idls map[string]string) (_ generic.DescriptorProvider, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf(`parse(v2) thrift idl find err: %v`, r)
+			err = fmt.Errorf(`parse thrift idl find err: %v`, r)
 		}
 	}()
 	provider, err := generic.NewThriftContentWithAbsIncludePathProvider(main, idls)
 	if err != nil {
-		return nil, fmt.Errorf("parse(v2) thrift idl find err: %v", err)
+		return nil, fmt.Errorf("parse thrift idl find err: %v", err)
 	}
 	return provider, nil
 }

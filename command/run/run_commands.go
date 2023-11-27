@@ -89,14 +89,14 @@ func NewCommand(config command.RunTaskConfig) (*cobra.Command, error) {
 				run := exec.Command(task.Cmd, task.Args...)
 				run.Dir = task.Dir
 				run.Env = append(os.Environ(), task.Env...)
-				logs.Info("%s start run %q", taskId, task.Name)
+				logs.Info("%s start run %q", taskId, task.name())
 				if err := utils.RunCmd(run, taskId+" ", task.Daemon); err != nil {
-					return fmt.Errorf(`%s run %q retuen err: %v`, taskId, task.Name, err)
+					return fmt.Errorf(`%s run %q retuen err: %v`, taskId, task.name(), err)
 				}
 				if task.Daemon {
 					continue
 				}
-				logs.Info("%s end run %q", taskId, task.Name)
+				logs.Info("%s end run %q", taskId, task.name())
 			}
 			return nil
 		},
@@ -158,6 +158,19 @@ type TaskConfig struct {
 	Run     string            `json:"run,omitempty" yaml:"run,omitempty"`         // 运行脚本，最终会替换成一个 shell命令
 	Vars    map[string]string `json:"vars,omitempty" yaml:"vars,omitempty"`       // 模版变量
 	Daemon  bool              `json:"daemon,omitempty" yaml:"daemon,omitempty"`   // 是否为后台任务
+}
+
+func (c *TaskConfig) name() string {
+	if c.Name != "" {
+		return c.Name
+	}
+	if c.Cmd != "" {
+		return c.Cmd
+	}
+	if c.Run != "" {
+		return c.Run
+	}
+	return "-"
 }
 
 func (c *TaskConfig) RenderTemplateVars(ctxValues map[string]string) (_ map[string]string, rErr error) {
@@ -274,7 +287,7 @@ func (r *TaskRunner) ReadTaskConfig(filename string, walk map[string]bool, ctxVa
 	for _, task := range configs {
 		taskVars, err := task.RenderTemplateVars(ctxValues)
 		if err != nil {
-			return nil, fmt.Errorf(`failed to render the template variables for task "%q", error: %v, config file: %s`, task.Name, err, filename)
+			return nil, fmt.Errorf(`failed to render the template variables for task "%q", error: %v, config file: %s`, task.name(), err, filename)
 		}
 		if r.IsNotEmpty(task.Include) {
 			includeFile, err := r.LookupIncludeFile(filename, task.Include, r.Includes)
@@ -288,9 +301,6 @@ func (r *TaskRunner) ReadTaskConfig(filename string, walk map[string]bool, ctxVa
 			tasks = append(tasks, cmds...)
 			continue
 		}
-		if task.Name == "" {
-			return nil, fmt.Errorf(`invald task name, config file: %s`, filename)
-		}
 		for index, kv := range task.Env {
 			key, value := utils.ReadKV(kv)
 			if key == "" {
@@ -301,7 +311,7 @@ func (r *TaskRunner) ReadTaskConfig(filename string, walk map[string]bool, ctxVa
 		if r.IsNotEmpty(task.Run) {
 			tasks = append(tasks, &TaskConfig{
 				Name: task.Name,
-				Cmd:  "/bin/bash",
+				Cmd:  "/bin/bash", // todo select env shell
 				Args: []string{
 					"-ce",
 					task.Run,

@@ -29,20 +29,20 @@ import (
 func main() {
 	done := make(chan os.Signal)
 	signal.Notify(done, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGQUIT)
-	defer command.CloseDeferTask()
+	defer command.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	command.AddDeferTask(cancel)
+	command.Defer(cancel)
 
 	go func() {
 		defer close(done)
 		cmd, err := NewCmd()
 		if err != nil {
-			command.AddDeferTask(func() { command.ExitError(err) })
+			command.Defer(func() { command.ExitError(err) })
 			return
 		}
 		if err := cmd.ExecuteContext(ctx); err != nil {
-			command.AddDeferTask(func() { command.ExitError(err) })
+			command.Defer(func() { command.ExitError(err) })
 			return
 		}
 	}()
@@ -73,7 +73,7 @@ func NewCmd() (*cobra.Command, error) {
 	cmd.SetUsageTemplate(command.UsageTmpl)
 	cmd.PersistentFlags().BoolVarP(&config.Verbose, "verbose", "v", false, "Turn on verbose mode")
 	cmd.PersistentFlags().StringVar(&config.ConfigFile, "config-file", config.ConfigFile, "Set the config file")
-	cmd.PersistentFlags().StringVar(&config.LogLevel, "log-level", "", "Set the log level in [fatal|error|warn|info|debug]")
+	cmd.PersistentFlags().StringVar(&config.LogLevel, "log-level", "info", "Set the log level in [debug|info|notice|warn|error]")
 	if err := utils.AddCmd(cmd, codec.NewCommand); err != nil {
 		return nil, err
 	}

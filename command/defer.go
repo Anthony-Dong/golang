@@ -9,9 +9,9 @@ import (
 
 var deferTask []func()
 var deferTaskLock sync.Mutex
-var closeSignalOnce sync.Once
+var closeOnce sync.Once
 
-func AddDeferTask(task func()) {
+func Defer(task func()) {
 	if task == nil {
 		panic("AddDeferTask: defer task is nil")
 	}
@@ -20,8 +20,8 @@ func AddDeferTask(task func()) {
 	deferTaskLock.Unlock()
 }
 
-func CloseDeferTask() {
-	closeSignalOnce.Do(func() {
+func Close() {
+	closeOnce.Do(func() {
 		for index := len(deferTask) - 1; index >= 0; index-- {
 			func() {
 				defer func() {

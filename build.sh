@@ -31,7 +31,7 @@ function format_golang_file () {
   project_dir=$(realpath "$1")
 	# shellcheck disable=SC2044
 	for elem in $(find "${project_dir}" -name '*.go'); do
-	  echo "format ${elem}"
+#	  echo "format ${elem}"
 		gofmt -w "${elem}"  > /dev/null 2>&1;
 		goimports -w -srcdir "${project_dir}" -local "$2" "${elem}" > /dev/null 2>&1;
 	done

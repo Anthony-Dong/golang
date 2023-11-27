@@ -14,7 +14,7 @@ func Test_ThriftClient(t *testing.T) {
 	return
 	// local test
 	mainIdl := filepath.Join(utils.GetGoProjectDir(), "pkg/idl/test/api.thrift")
-	client := NewThriftClient(idl.NewLocalIDLProvider(mainIdl))
+	client := NewThriftClient(idl.NewDescriptorProvider(idl.NewMemoryIDLProvider(mainIdl)))
 	ctx := context.Background()
 	req := &Request{
 		Service: "TestServiceName",
