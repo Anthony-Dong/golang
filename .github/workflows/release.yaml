@@ -24,7 +24,7 @@ jobs:
       - name: Compile
         run: make build
       - name: Packaging...
-        run: tar -zcvf gtool-${{ matrix.goos }}-${{ matrix.goarch }}.tgz bin/gtool
+        run: tar -zcvf devtool-${{ matrix.goos }}-${{ matrix.goarch }}.tgz bin/devtool
       - name: Uploading assets...
         if: ${{ !env.ACT }}
         id: upload-release-asset
@@ -33,8 +33,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./gtool-${{ matrix.goos }}-${{ matrix.goarch }}.tgz
-          asset_name: gtool-${{ matrix.goos }}-${{ matrix.goarch }}.tgz
+          asset_path: ./devtool-${{ matrix.goos }}-${{ matrix.goarch }}.tgz
+          asset_name: devtool-${{ matrix.goos }}-${{ matrix.goarch }}.tgz
           asset_content_type: application/gzip
   package_darwin_11:
     runs-on: macos-11
@@ -54,7 +54,7 @@ jobs:
       - name: Compile
         run: make build
       - name: Packaging...
-        run: tar -zcvf gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v11.tgz bin/gtool
+        run: tar -zcvf devtool-${{ matrix.goos }}-${{ matrix.goarch }}-v11.tgz bin/devtool
       - name: Uploading assets...
         if: ${{ !env.ACT }}
         id: upload-release-asset
@@ -63,8 +63,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v11.tgz
-          asset_name: gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v11.tgz
+          asset_path: ./devtool-${{ matrix.goos }}-${{ matrix.goarch }}-v11.tgz
+          asset_name: devtool-${{ matrix.goos }}-${{ matrix.goarch }}-v11.tgz
           asset_content_type: application/gzip
   package_darwin_12:
     runs-on: macos-12
@@ -84,7 +84,7 @@ jobs:
       - name: Compile
         run: make build
       - name: Packaging...
-        run: tar -zcvf gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v12.tgz bin/gtool
+        run: tar -zcvf devtool-${{ matrix.goos }}-${{ matrix.goarch }}-v12.tgz bin/devtool
       - name: Uploading assets...
         if: ${{ !env.ACT }}
         id: upload-release-asset
@@ -93,6 +93,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v12.tgz
-          asset_name: gtool-${{ matrix.goos }}-${{ matrix.goarch }}-v12.tgz
+          asset_path: ./devtool-${{ matrix.goos }}-${{ matrix.goarch }}-v12.tgz
+          asset_name: devtool-${{ matrix.goos }}-${{ matrix.goarch }}-v12.tgz
           asset_content_type: application/gzip

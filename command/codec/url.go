@@ -14,8 +14,8 @@ import (
 	"github.com/mattn/go-shellwords"
 )
 
-func ParseUrl(_src []byte) (dst []byte, err error) {
-	input := strings.TrimSpace(string(_src))
+func ParseUrl(src []byte) (dst []byte, err error) {
+	input := strings.TrimSpace(string(src))
 	if decode, err := codec.NewUrlCodec().Decode(utils.String2Bytes(input)); err == nil {
 		input = string(decode)
 	}
@@ -66,14 +66,5 @@ func ParseCmd(src []byte) (dst []byte, err error) {
 		}
 		cmdSlice = fix
 	}
-	if len(cmdSlice) == 0 {
-		return utils.ToJsonByte(cmdSlice), nil
-	}
-	switch cmdSlice[0] {
-	case "curl":
-
-		return nil, nil
-	default:
-		return utils.ToJsonByte(cmdSlice, true), nil
-	}
+	return utils.ToJsonByte(cmdSlice, true), nil
 }

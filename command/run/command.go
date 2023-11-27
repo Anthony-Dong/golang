@@ -77,10 +77,10 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 				return err
 			}
 			if debug {
-				logs.Info("file: %s\n%s", filename, utils.ToYaml(configs, true))
+				logs.Info("file: %s\n%s", filename, utils.ToYaml(configs))
 				return nil
 			}
-			logs.Info("file: %s\n%s", filename, utils.ToYaml(configs, true))
+			logs.Info("file: %s\n%s", filename, utils.ToYaml(configs))
 			for index, task := range configs {
 				taskId := fmt.Sprintf("[task-%d]", index)
 				run := exec.Command(task.Cmd, task.Args...)
