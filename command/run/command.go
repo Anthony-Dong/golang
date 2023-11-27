@@ -363,6 +363,9 @@ func (r *TaskRunner) LookupIncludeFile(cur string, filename string, includes []s
 
 func (r *TaskRunner) LookupFile(filename string, includes []string) (string, error) {
 	files := make([]string, 0)
+	if filepath.IsAbs(filename) {
+		files = append(files, filename)
+	}
 	for _, elem := range includes {
 		files = append(files, filepath.Join(elem, filename))
 	}
