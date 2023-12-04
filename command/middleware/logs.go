@@ -17,6 +17,14 @@ func NewInitLoggerMv(config *command.AppConfig) Middleware {
 		if config.Verbose {
 			logs.SetLevel(logs.LevelDebug)
 		}
+
+		//logDir := filepath.Join(utils.GetUserHomeDir(), command.AppHomeDir, "logs")
+		//if !utils.ExistFile(logDir) {
+		//	if err := os.MkdirAll(logDir, utils.DefaultDirMode); err != nil {
+		//		return err
+		//	}
+		//	logs.Debug("create log dir")
+		//}
 		return nil
 	}
 }

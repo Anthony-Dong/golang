@@ -1,32 +1,44 @@
 package git
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_getRepoInfo(t *testing.T) {
-	type args struct {
-		url string
+	{
+		info, err := getRepoInfo("git@github.com:golang/tools.git")
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, info, &RepoInfo{Scheme: "ssh", Namespace: "github.com", Path: "golang/tools"})
+		assert.Equal(t, info.Url(), "git@github.com:golang/tools.git")
 	}
-	tests := []struct {
-		name    string
-		args    args
-		want    *RepoInfo
-		wantErr bool
-	}{
-		// TODO: Add test cases.
+	{
+		info, err := getRepoInfo("https://github.com/golang/tools.git")
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, info, &RepoInfo{Scheme: "https", Namespace: "github.com", Path: "golang/tools"})
+		assert.Equal(t, info.Url(), "https://github.com/golang/tools.git")
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := getRepoInfo(tt.args.url)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("getRepoInfo() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("getRepoInfo() got = %v, want %v", got, tt.want)
-			}
-		})
+
+	{
+		info, err := getRepoInfo("http://github.com/golang/tools.git")
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, info, &RepoInfo{Scheme: "http", Namespace: "github.com", Path: "golang/tools"})
+		assert.Equal(t, info.Url(), "http://github.com/golang/tools.git")
+	}
+
+	{
+		info, err := getRepoInfo("github.com/golang/tools")
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, info, &RepoInfo{Scheme: "ssh", Namespace: "github.com", Path: "golang/tools"})
+		assert.Equal(t, info.Url(), "git@github.com:golang/tools.git")
 	}
 }

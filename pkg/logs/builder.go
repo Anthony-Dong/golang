@@ -18,6 +18,9 @@ type kv struct {
 }
 
 func (kv kv) String() string {
+	if kv.key == "__str__" {
+		return kv.value.(string)
+	}
 	return fmt.Sprintf("%s=%v", kv.key, kv.value)
 }
 
@@ -46,8 +49,12 @@ func (b *builder) Error() *builder {
 	return b
 }
 
-func (b *builder) Prefix(prefix string) *builder {
-	b.prefix = prefix
+func (b *builder) String(format string, v ...interface{}) *builder {
+	if len(v) == 0 {
+		b.kvs = append(b.kvs, kv{key: "__str__", value: format})
+	} else {
+		b.kvs = append(b.kvs, kv{key: "__str__", value: fmt.Sprintf(format, v...)})
+	}
 	return b
 }
 
@@ -58,10 +65,6 @@ func (b *builder) KV(key string, value interface{}) *builder {
 
 func (b *builder) Emit(ctx context.Context) {
 	output := bytes.Buffer{}
-	if b.prefix != "" {
-		output.WriteString(b.prefix)
-		output.WriteString(": ")
-	}
 	for index, elem := range b.kvs {
 		output.WriteString(elem.String())
 		if index == len(b.kvs)-1 {

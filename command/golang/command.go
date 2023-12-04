@@ -1,4 +1,4 @@
-package gotool
+package golang
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ import (
 func NewCommand() (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "go",
-		Short: "The golang tools",
+		Short: "The golang language tools",
 	}
 	if err := command.AddCommand(cmd, NewGoRunCommand); err != nil {
 		return nil, err

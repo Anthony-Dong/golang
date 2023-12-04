@@ -6,9 +6,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/anthony-dong/golang/command/turl"
+	"github.com/anthony-dong/golang/command/golang"
 
-	"github.com/anthony-dong/golang/command/gotool"
+	"github.com/anthony-dong/golang/command/cpp"
+	"github.com/anthony-dong/golang/command/git"
+
+	"github.com/anthony-dong/golang/command/turl"
 
 	"github.com/anthony-dong/golang/command"
 	"github.com/anthony-dong/golang/command/jsontool"
@@ -95,10 +98,16 @@ func NewCmd() (*cobra.Command, error) {
 	if err := command.AddConfigCommand(cmd, config, run.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := command.AddCommand(cmd, gotool.NewCommand); err != nil {
+	if err := command.AddCommand(cmd, golang.NewCommand); err != nil {
 		return nil, err
 	}
 	if err := command.AddCommand(cmd, turl.NewTurlCommand); err != nil {
+		return nil, err
+	}
+	if err := command.AddCommand(cmd, git.NewCommand); err != nil {
+		return nil, err
+	}
+	if err := command.AddCommand(cmd, cpp.NewCommand); err != nil {
 		return nil, err
 	}
 	return cmd, nil

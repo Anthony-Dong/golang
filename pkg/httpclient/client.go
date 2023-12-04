@@ -62,7 +62,7 @@ func (c *HostClient) doRequest(ctx context.Context, method string, path string, 
 		ctx = context.Background()
 	}
 	start := time.Now()
-	log := logs.Builder().Info().Prefix("http request")
+	log := logs.Builder().Info().String("http request:")
 	defer func() {
 		log.KV("spend", fmt.Sprintf("%dms", time.Now().Sub(start)/time.Millisecond))
 		if _err != nil {

@@ -141,6 +141,17 @@ func ContainsString(str []string, elem string) bool {
 	return false
 }
 
+func UniqueString(array []string) []string {
+	ret := make([]string, 0, len(array))
+	for _, elem := range array {
+		if Contains(ret, elem) {
+			continue
+		}
+		ret = append(ret, elem)
+	}
+	return ret
+}
+
 func ToJsonByte(input interface{}, indent ...bool) []byte {
 	return String2Bytes(ToJson(input, indent...))
 }

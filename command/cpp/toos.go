@@ -4,7 +4,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
+	"sync"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/anthony-dong/golang/pkg/logs"
 	"github.com/anthony-dong/golang/pkg/utils"
@@ -12,45 +16,68 @@ import (
 
 // Tools
 /**
-Build: clang++ -Wall -std=c++17 -O0 -g -I/usr/local/include -c ./cpp/fmt.cpp -o output/fmt.a
+Compile: clang++ -Wall -std=c++17 -O0 -g -I/usr/local/include -c ./cpp/fmt.cpp -o output/fmt.a
 Link: clang++ -o output/fmt output/fmt.a -L/usr/local/lib -lspdlog -lgtest_main -lgtest
 Run: output/fmt
 */
+
+const ToolsOutputDir = "output"
+
 type Tools struct {
-	CXX string
-	CC  string
-	Dir string
+	CXX string `json:",omitempty"`
+	CC  string `json:",omitempty"`
+	Dir string `json:",omitempty"`
 
-	BuildArgs []string
-	LinkArgs  []string
+	BuildArgs []string `json:",omitempty"` // 编译命令
+	LinkArgs  []string `json:",omitempty"` // 链接命令
 
-	SRCS []string
-	HDRS []string
+	SRCS []string `json:",omitempty"` // 源文件
+	HDRS []string `json:",omitempty"` // 头文件
 
-	BuildIncludes []string
-	LinkIncludes  []string
-	LinkLibraries []string
+	BuildIncludes []string `json:",omitempty"`
+	LinkIncludes  []string `json:",omitempty"`
+	LinkLibraries []string `json:",omitempty"`
 
-	Binary string
+	CompileType string `json:",omitempty"` // 构建类型
 
-	BuildType string
+	objects []string
 }
 
-const BuildTypeRelease = "release"
+const CompileTypeDebug = "debug"
+const CompileTypeRelease = "release"
+const LinkTypeBinary = "binary"
+const LinkTypeLibrary = "library"
 
-func (t *Tools) Build() error {
+func (t *Tools) Compile(thread int) error {
+	wg := errgroup.Group{}
+	wg.SetLimit(thread)
+	lock := sync.Mutex{}
+	for _, _src := range t.SRCS {
+		src := _src
+		wg.Go(func() error {
+			if obj, err := t.compile(src); err != nil {
+				return err
+			} else {
+				lock.Lock()
+				t.objects = append(t.objects, obj)
+				lock.Unlock()
+			}
+			return nil
+		})
+	}
+	return wg.Wait()
+}
+
+func (t *Tools) compile(src string) (string, error) {
 	args := t.BuildArgs
-
 	if !t.hasArgs(args, "-W") {
 		args = append(args, "-Wall")
 	}
-
 	if !t.hasArgs(args, "-std") {
-		args = append(args, "-std=c++17")
+		args = append(args, fmt.Sprintf("-std=c++%s", CXX_STANDARD()))
 	}
-
-	switch t.BuildType {
-	case BuildTypeRelease:
+	switch t.CompileType {
+	case CompileTypeRelease:
 		if t.hasArgs(args, "-O") {
 			logs.Debug("Build: cannot set arg -O2 because you already configured it")
 		} else {
@@ -66,22 +93,24 @@ func (t *Tools) Build() error {
 			args = append(args, "-g") // Generate source-level debug information
 		}
 	}
-
 	for _, elem := range t.BuildIncludes {
 		args = append(args, fmt.Sprintf("-I%s", elem))
 	}
-	args = append(args, "-c")
-	for _, header := range t.HDRS {
-		args = append(args, header)
-	}
-	for _, src := range t.SRCS {
-		args = append(args, src)
-	}
-	args = append(args, "-o", t.Binary+".a")
+	object := t.NewObjectName(src)
+	args = append(args, "-c", src)
+	args = append(args, "-o", t.NewObjectName(src))
 	command := exec.Command(t.CXX, args...)
 	command.Dir = t.Dir
-	logs.Info("Build: %s", utils.PrettyCmd(command))
-	return utils.RunCommand(command)
+	logs.Info("Compile: %s", utils.PrettyCmd(command))
+	if err := utils.RunCommand(command); err != nil {
+		return "", err
+	}
+	return object, nil
+}
+
+func (t *Tools) NewObjectName(filename string) string {
+	filename = filepath.Base(filename)
+	return filepath.Join(ToolsOutputDir, strings.TrimSuffix(filename, filepath.Ext(filename))+".o")
 }
 
 func (t *Tools) Init() error {
@@ -94,9 +123,25 @@ func (t *Tools) Init() error {
 	return nil
 }
 
-func (t *Tools) Link() error {
-	args := []string{"-o", t.Binary}
-	args = append(args, t.Binary+".a")
+func (t *Tools) Link(linkType string, file string) error {
+	output := filepath.Join(ToolsOutputDir, file)
+	switch linkType {
+	case LinkTypeBinary:
+		return t.linkBinary(output)
+	case LinkTypeLibrary:
+		if !strings.HasSuffix(output, ".a") {
+			output = output + ".a"
+		}
+		return t.linkLibrary(output)
+	}
+	return fmt.Errorf(`not support link type`)
+}
+
+func (t *Tools) linkBinary(output string) error {
+	args := []string{"-o", output}
+	for _, object := range t.objects {
+		args = append(args, object)
+	}
 	for _, elem := range t.LinkIncludes {
 		args = append(args, fmt.Sprintf("-L%s", elem))
 	}
@@ -109,8 +154,25 @@ func (t *Tools) Link() error {
 	return utils.RunCommand(command)
 }
 
-func (t *Tools) Run() error {
-	runCmd := exec.Command(t.Binary)
+func (t *Tools) linkLibrary(output string) error {
+	// https://blog.csdn.net/xuhongning/article/details/6365200
+	args := []string{"-r", "-c"}
+	if logs.IsDebug() {
+		args = append(args, "-v")
+	}
+	args = append(args, output)
+	for _, object := range t.objects {
+		args = append(args, object)
+	}
+	command := exec.Command("ar", args...)
+	command.Dir = t.Dir
+	logs.Info("Link: %s", utils.PrettyCmd(command))
+	return utils.RunCommand(command)
+}
+
+func (t *Tools) Run(binaryName string) error {
+	binaryFile := filepath.Join(ToolsOutputDir, binaryName)
+	runCmd := exec.Command(binaryFile)
 	runCmd.Dir = t.Dir
 	logs.Info("Run: %s", utils.PrettyCmd(runCmd))
 	return utils.RunCommand(runCmd)
@@ -137,4 +199,11 @@ func CC() string {
 		return cc
 	}
 	return "clang"
+}
+
+func CXX_STANDARD() string {
+	if cc := os.Getenv("CXX_STANDARD"); cc != "" {
+		return ""
+	}
+	return "17"
 }

@@ -42,7 +42,10 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 			logs.Debug("includes: %s. enable debug: %v.", utils.ToJson(helper.Includes), debug)
 			if list {
 				for _, elem := range helper.Includes {
-					files, err := utils.GetAllFiles(elem, func(fileName string) bool {
+					if elem == "" {
+						continue
+					}
+					files, err := utils.GetAllFilesWithMax(elem, func(fileName string) bool {
 						isYaml := strings.HasSuffix(fileName, ".yaml") || strings.HasSuffix(fileName, ".yml")
 						if !isYaml {
 							return false
@@ -51,7 +54,7 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 							return false
 						}
 						return true
-					})
+					}, 1024)
 					if err != nil {
 						return err
 					}
@@ -60,6 +63,7 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 					}
 					return nil
 				}
+				return nil
 			}
 			if filename == "" {
 				return fmt.Errorf(`required flag(s) "config" not set`)
