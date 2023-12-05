@@ -13,7 +13,7 @@ func Test_getRepoInfo(t *testing.T) {
 			t.Fatal(err)
 		}
 		assert.Equal(t, info, &RepoInfo{Scheme: "ssh", Namespace: "github.com", Path: "golang/tools"})
-		assert.Equal(t, info.Url(), "git@github.com:golang/tools.git")
+		assert.Equal(t, info.CloneUrl(), "git@github.com:golang/tools.git")
 	}
 	{
 		info, err := getRepoInfo("https://github.com/golang/tools.git")
@@ -21,7 +21,7 @@ func Test_getRepoInfo(t *testing.T) {
 			t.Fatal(err)
 		}
 		assert.Equal(t, info, &RepoInfo{Scheme: "https", Namespace: "github.com", Path: "golang/tools"})
-		assert.Equal(t, info.Url(), "https://github.com/golang/tools.git")
+		assert.Equal(t, info.CloneUrl(), "https://github.com/golang/tools.git")
 	}
 
 	{
@@ -30,7 +30,7 @@ func Test_getRepoInfo(t *testing.T) {
 			t.Fatal(err)
 		}
 		assert.Equal(t, info, &RepoInfo{Scheme: "http", Namespace: "github.com", Path: "golang/tools"})
-		assert.Equal(t, info.Url(), "http://github.com/golang/tools.git")
+		assert.Equal(t, info.CloneUrl(), "http://github.com/golang/tools.git")
 	}
 
 	{
@@ -39,6 +39,6 @@ func Test_getRepoInfo(t *testing.T) {
 			t.Fatal(err)
 		}
 		assert.Equal(t, info, &RepoInfo{Scheme: "ssh", Namespace: "github.com", Path: "golang/tools"})
-		assert.Equal(t, info.Url(), "git@github.com:golang/tools.git")
+		assert.Equal(t, info.CloneUrl(), "git@github.com:golang/tools.git")
 	}
 }
