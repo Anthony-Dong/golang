@@ -8,6 +8,8 @@ type AppConfig struct {
 	UploadConfig  *UploadConfig  `yaml:"Upload,omitempty"`
 	HexoConfig    *HexoConfig    `yaml:"Hexo,omitempty"`
 	RunTaskConfig *RunTaskConfig `yaml:"RunTask,omitempty"`
+
+	Middlewares []func(config *AppConfig) Middleware `yaml:"-"`
 }
 
 type RunTaskConfig struct {

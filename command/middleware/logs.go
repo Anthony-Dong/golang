@@ -7,9 +7,7 @@ import (
 	"github.com/anthony-dong/golang/pkg/logs"
 )
 
-type Middleware func(cmd *cobra.Command, args []string) error
-
-func NewInitLoggerMv(config *command.AppConfig) Middleware {
+func NewInitLoggerMv(config *command.AppConfig) command.Middleware {
 	return func(ctx *cobra.Command, args []string) error {
 		if config.LogLevel != "" {
 			logs.SetLevelString(config.LogLevel)
@@ -17,14 +15,6 @@ func NewInitLoggerMv(config *command.AppConfig) Middleware {
 		if config.Verbose {
 			logs.SetLevel(logs.LevelDebug)
 		}
-
-		//logDir := filepath.Join(utils.GetUserHomeDir(), command.AppHomeDir, "logs")
-		//if !utils.ExistFile(logDir) {
-		//	if err := os.MkdirAll(logDir, utils.DefaultDirMode); err != nil {
-		//		return err
-		//	}
-		//	logs.Debug("create log dir")
-		//}
 		return nil
 	}
 }

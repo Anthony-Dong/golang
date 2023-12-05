@@ -7,9 +7,8 @@ import (
 )
 
 type builder struct {
-	level  Level
-	prefix string
-	kvs    []kv
+	level Level
+	kvs   []kv
 }
 
 type kv struct {
@@ -64,13 +63,15 @@ func (b *builder) KV(key string, value interface{}) *builder {
 }
 
 func (b *builder) Emit(ctx context.Context) {
+	// todo add buffer cache
 	output := bytes.Buffer{}
+	lastIndex := len(b.kvs) - 1
 	for index, elem := range b.kvs {
 		output.WriteString(elem.String())
-		if index == len(b.kvs)-1 {
-			continue
+		if index == lastIndex {
+			break
 		}
-		output.WriteString(" ")
+		output.WriteByte(' ')
 	}
 	logf(ctx, b.level, 2, output.String())
 }

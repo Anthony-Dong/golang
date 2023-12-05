@@ -13,7 +13,7 @@ import (
 	"github.com/anthony-dong/golang/pkg/utils"
 )
 
-func NewInitConfigMv(config *command.AppConfig) Middleware {
+func NewInitConfigMv(config *command.AppConfig) command.Middleware {
 	return func(cmd *cobra.Command, args []string) error {
 		if config.ConfigFile != "" {
 			if err := readConfig(config.ConfigFile, config); err != nil {
