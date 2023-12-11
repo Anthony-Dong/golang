@@ -8,3 +8,5 @@
 *.pcap
 *.console
 /.devtool
+output
+bazel-*

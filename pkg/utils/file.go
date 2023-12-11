@@ -43,6 +43,21 @@ func ExistFile(filename string) bool {
 	return err == nil || os.IsExist(err)
 }
 
+// Exist 判断文件是否存在.
+func ExistDir(filename string) bool {
+	stat, err := os.Stat(filename)
+	if err != nil {
+		return false
+	}
+	if stat == nil {
+		return false
+	}
+	if stat.IsDir() {
+		return true
+	}
+	return false
+}
+
 func GetFilePrefixAndSuffix(filename string) (prefix, suffix string) {
 	filename = filepath.Base(filename)
 	ext := filepath.Ext(filename)
@@ -84,6 +99,28 @@ type FilterFile func(fileName string) bool
 func GetAllFiles(dirPth string, filter FilterFile) ([]string, error) {
 	files := make([]string, 0)
 	err := filepath.Walk(dirPth, func(path string, info os.FileInfo, err error) error {
+		if info != nil && info.IsDir() {
+			return nil
+		}
+		if filter(path) {
+			files = append(files, path)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
+}
+
+func GetAllFilesWithMax(dirPth string, filter FilterFile, max int) ([]string, error) {
+	files := make([]string, 0)
+	count := 0
+	err := filepath.Walk(dirPth, func(path string, info os.FileInfo, err error) error {
+		count++
+		if count > max {
+			return filepath.SkipDir
+		}
 		if info != nil && info.IsDir() {
 			return nil
 		}

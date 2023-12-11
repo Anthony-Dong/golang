@@ -80,3 +80,9 @@ func RunCmd(cmd *exec.Cmd, logPrefix string, isDaemon bool) error {
 	}
 	return cmd.Wait()
 }
+
+func RunCommand(cmd *exec.Cmd) error {
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}

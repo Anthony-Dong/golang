@@ -7,9 +7,7 @@ import (
 	"github.com/anthony-dong/golang/pkg/logs"
 )
 
-type Middleware func(cmd *cobra.Command, args []string) error
-
-func NewInitLoggerMv(config *command.AppConfig) Middleware {
+func NewInitLoggerMv(config *command.AppConfig) command.Middleware {
 	return func(ctx *cobra.Command, args []string) error {
 		if config.LogLevel != "" {
 			logs.SetLevelString(config.LogLevel)

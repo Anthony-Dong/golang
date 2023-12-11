@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/fatih/color"
 )
@@ -119,6 +120,10 @@ func Debug(format string, v ...interface{}) {
 	logf(context.Background(), LevelDebug, 2, format, v...)
 }
 
+func IsDebug() bool {
+	return IsLevel(LevelDebug)
+}
+
 func Info(format string, v ...interface{}) {
 	logf(context.Background(), LevelInfo, 2, format, v...)
 }
@@ -177,7 +182,9 @@ func logf(ctx context.Context, level Level, cl int, format string, v ...interfac
 		out.WriteString(strconv.FormatInt(int64(line), 10))
 		out.WriteString(" ")
 	}
-	out.WriteString(fmt.Sprintf(format, v...))
+	logData := fmt.Sprintf(format, v...)
+	logData = trimRightSpace(logData)
+	out.WriteString(logData)
 	out.WriteByte('\n')
 	output := out.String()
 	if logFlag&LogFlagColor == LogFlagColor {
@@ -194,4 +201,13 @@ func StdOut(format string, v ...interface{}) {
 
 func StdError(format string, v ...interface{}) {
 	fmt.Fprintln(os.Stderr, color.HiRedString(format, v...))
+}
+
+func trimRightSpace(str string) string {
+	if len(str) == 0 {
+		return str
+	}
+	return strings.TrimRightFunc(str, func(r rune) bool {
+		return unicode.IsSpace(r)
+	})
 }

@@ -148,3 +148,7 @@ func TestRegexp(t *testing.T) {
 	t.Log(compile.MatchString("..."))
 	t.Log(compile.MatchString("...a"))
 }
+
+func TestUniqueString(t *testing.T) {
+	assert.Equal(t, UniqueString([]string{"k3", "k1", "k2", "k3", "k4"}), []string{"k3", "k1", "k2", "k4"})
+}

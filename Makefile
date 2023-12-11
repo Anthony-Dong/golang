@@ -1,5 +1,5 @@
-.PHONY: ci build install fmt check test
-ci: check fmt build
+.PHONY: ci
+ci: check lint build
 
 AppName := devtool
 
@@ -12,8 +12,8 @@ install:
 	bash build.sh install $(AppName)
 	$$(go env GOPATH)/bin/$(AppName) --version
 
-.PHONY: fmt
-fmt:
+.PHONY: lint
+lint:
 	bash build.sh format
 
 .PHONY: check
