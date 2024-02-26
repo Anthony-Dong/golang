@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -16,7 +15,7 @@ import (
 func NewInitConfigMv(config *command.AppConfig) command.Middleware {
 	return func(cmd *cobra.Command, args []string) error {
 		if config.ConfigFile != "" {
-			if err := readConfig(config.ConfigFile, config); err != nil {
+			if err := readStaticConfig(config.ConfigFile, config); err != nil {
 				return err
 			}
 			logs.Debug("init config success. filename: %s", config.ConfigFile)
@@ -29,9 +28,9 @@ func NewInitConfigMv(config *command.AppConfig) command.Middleware {
 		}
 		files = append(files, filepath.Join(utils.GetPwd(), command.AppConfigFile))
 		files = append(files, filepath.Join(filepath.Dir(executable), command.AppConfigFile))
-		files = append(files, filepath.Join(utils.GetUserHomeDir(), command.UserHomeAppConfigFile))
+		files = append(files, filepath.Join(command.GetAppHomeDir(), command.AppConfigFile))
 		for _, file := range files {
-			if err := readConfig(file, config); err == nil {
+			if err := readStaticConfig(file, config); err == nil {
 				logs.Debug("init config success. filename: %s", file)
 				return nil
 			}
@@ -41,10 +40,10 @@ func NewInitConfigMv(config *command.AppConfig) command.Middleware {
 	}
 }
 
-func readConfig(filename string, cfg *command.AppConfig) error {
-	content, err := ioutil.ReadFile(filename)
+func readStaticConfig(filename string, cfg *command.AppConfig) error {
+	content, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}
-	return yaml.Unmarshal(content, cfg)
+	return yaml.Unmarshal(content, &cfg.StaticConfig)
 }

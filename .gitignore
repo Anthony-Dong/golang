@@ -10,3 +10,4 @@
 /.devtool
 output
 bazel-*
+/example

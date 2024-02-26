@@ -1,8 +1,8 @@
 package utils
 
-func Contains(arr []string, str string) bool {
+func Contains[T comparable](arr []T, data T) bool {
 	for _, elem := range arr {
-		if elem == str {
+		if elem == data {
 			return true
 		}
 	}

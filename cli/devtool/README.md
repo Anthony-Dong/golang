@@ -5,19 +5,22 @@
 devtool 是一个强大的Cli工具，其中包含了日常开发中的一些可能涉及到的高频工具，这里避免重复造轮子，所以一般就是日常用的一些工具但是市场上没有符合自己需求的，得自己写！
 
 ```shell
-➜  devtool git:(master) devtool --help
+➜  devtool  --help      
 Usage: devtool [OPTIONS] COMMAND
 
 Commands:
   codec       The Encode and Decode data tool
+  cpp         The cpp language tools
+  curl        Send thrift like curl
   gen         Auto compile thrift、protobuf IDL
-  go          The golang tools
+  git         The git tools
+  go          The golang language tools
   help        Help about any command
   hexo        The Hexo tool
   json        The Json tool
+  proxy       Proxy thrift requests
   run         Run task templates
   tcpdump     Decode tcpdump file & stream
-  turl        Send thrift request like curl
   upload      File upload tool
 
 Options:
@@ -87,7 +90,7 @@ sudo apt-get install -y libpcap-dev
 
 ## [编解码工具 - codec ](../../command/codec)
 
-## [Go开发工具 - gotool](../../command/gotool)
+## [Go开发工具 - golang](../../command/golang)
 
 ## [写博客工具 - hexo](../../command/hexo)
 
@@ -100,3 +103,20 @@ sudo apt-get install -y libpcap-dev
 ## [JSON工具 - json](../../command/jsontool)
 
 ## [CPP工具 - cpp](../../command/cpp)
+
+## [代理工具 - proxy](../../command/proxy)
+
+## [Curl - proxy](../../command/curl)
+
+
+# 其他
+
+## 如何测试Thrift请求？ 
+
+本文的测试用例都采用的 [kitex-example](https://github.com/cloudwego/kitex-examples) 项目的用例
+
+```shell
+mkdir -p example
+cd example
+git clone git@github.com:cloudwego/kitex-examples.git --branch v0.2.3 --depth 1
+```

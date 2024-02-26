@@ -21,7 +21,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
+func NewCommand() (*cobra.Command, error) {
 	filename := ""
 	list := false
 	debug := false
@@ -31,6 +31,7 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 		Use:   "run",
 		Short: `Run task templates`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			config := command.GetAppConfig(cmd.Context())
 			if config.RunTaskConfig == nil {
 				config.RunTaskConfig = &command.RunTaskConfig{}
 			}
@@ -54,14 +55,13 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 							return false
 						}
 						return true
-					}, 1024)
+					}, 64)
 					if err != nil {
 						return err
 					}
 					for _, file := range files {
 						logs.Info("config file: %s", file)
 					}
-					return nil
 				}
 				return nil
 			}

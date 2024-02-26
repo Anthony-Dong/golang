@@ -25,7 +25,7 @@ type uploadCommand struct {
 	DstFile        string `json:"dst_file,omitempty"`
 }
 
-func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
+func NewCommand() (*cobra.Command, error) {
 	cmd := &cobra.Command{Use: "upload", Short: `File upload tool`}
 	var (
 		cfg = &uploadCommand{}
@@ -38,7 +38,7 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 		return nil, err
 	}
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		return cfg.Run(cmd.Context(), config.UploadConfig)
+		return cfg.Run(cmd.Context(), command.GetAppConfig(cmd.Context()).UploadConfig)
 	}
 	return cmd, nil
 }

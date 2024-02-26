@@ -21,3 +21,50 @@ func TimeToSeconds(duration time.Duration) string {
 func Float642String(num float64, saveDecimalPoint int) string {
 	return strconv.FormatFloat(num, 'f', saveDecimalPoint, 64)
 }
+
+type JsonDuration time.Duration
+
+func (j JsonDuration) Duration() time.Duration {
+	return time.Duration(j)
+}
+
+func (j JsonDuration) String() string {
+	return j.Duration().String()
+}
+
+func (j JsonDuration) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.Quote(time.Duration(j).String())), nil
+}
+
+func NewJsonDuration(duration time.Duration) JsonDuration {
+	return JsonDuration(duration)
+}
+
+func (j *JsonDuration) UnmarshalJSON(data []byte) error {
+	if len(data) > 0 && data[0] == '"' {
+		unquote, err := strconv.Unquote(string(data))
+		if err != nil {
+			return err
+		}
+		if unquote == "" {
+			*j = 0
+			return nil
+		}
+		duration, err := time.ParseDuration(unquote)
+		if err != nil {
+			return err
+		}
+		*j = JsonDuration(duration)
+		return nil
+	}
+	if len(data) == 4 && string(data) == "null" {
+		*j = 0
+		return nil
+	}
+	duration, err := strconv.ParseInt(string(data), 10, 64)
+	if err != nil {
+		return err
+	}
+	*j = JsonDuration(duration)
+	return nil
+}

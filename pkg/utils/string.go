@@ -249,3 +249,11 @@ func PrettyJson(src string) string {
 	}
 	return out.String()
 }
+
+func PrettyJsonBytes(src []byte) []byte {
+	out := bytes.Buffer{}
+	if err := json.Indent(&out, src, "", "    "); err != nil {
+		return nil
+	}
+	return out.Bytes()
+}

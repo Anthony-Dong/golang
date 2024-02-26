@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/cloudwego/kitex/pkg/generic/descriptor"
@@ -38,76 +39,96 @@ var basicTypeMap = map[descriptor.Type]bool{
 	descriptor.STRING: true,
 }
 
-func GetExampleValue(tType *descriptor.TypeDescriptor, walk map[*descriptor.StructDescriptor]bool, op *Option) interface{} {
+func GetThriftExampleValue(tType *descriptor.TypeDescriptor, walk map[*descriptor.StructDescriptor]bool, op *ThriftExampleOption) (interface{}, error) {
 	if walk == nil {
 		walk = map[*descriptor.StructDescriptor]bool{}
 	}
+	if op == nil {
+		op = NewThriftExampleOption()
+	}
 	if basicTypeMap[tType.Type] {
-		return op.Instance(tType.Type)
+		return op.Generator.Instance(tType.Type), nil
 	}
 	switch tType.Type {
 	case descriptor.LIST:
 		result := make([]interface{}, 0, op.GetListSize())
 		for x := 0; x < op.GetListSize(); x++ {
-			vv := GetExampleValue(tType.Elem, walk, op)
+			vv, err := GetThriftExampleValue(tType.Elem, walk, op)
+			if err != nil {
+				return nil, err
+			}
 			if vv == nil {
 				continue
 			}
 			result = append(result, vv)
 		}
-		return result
+		return result, nil
 	case descriptor.MAP:
 		result := make(map[string]interface{}, op.GetMapSize())
 		for x := 0; x < op.GetMapSize(); x++ {
 			if !basicTypeMap[tType.Key.Type] {
 				continue
 			}
-			kv := GetExampleValue(tType.Key, walk, op)
+			kv, err := GetThriftExampleValue(tType.Key, walk, op)
+			if err != nil {
+				return nil, err
+			}
 			if kv == nil {
 				continue
 			}
-			vv := GetExampleValue(tType.Elem, walk, op)
+			vv, err := GetThriftExampleValue(tType.Elem, walk, op)
+			if err != nil {
+				return nil, err
+			}
 			result[utils.ToString(kv)] = vv
 		}
-		return result
+		return result, nil
 	case descriptor.STRUCT:
 		if walk[tType.Struct] {
-			return nil
+			return map[string]interface{}{}, nil
 		}
 		walk[tType.Struct] = true
 		kv := orderedmap.New()
 		fields := NewFields(tType.Struct)
 		for _, elem := range fields {
 			name := elem.TType.FieldName()
-			kv.Set(name, GetExampleValue(elem.TType.Type, walk, op))
+			value, err := GetThriftExampleValue(elem.TType.Type, walk, op)
+			if err != nil {
+				return nil, err
+			}
+			kv.Set(name, value)
 		}
 		delete(walk, tType.Struct)
-		return kv
+		return kv, nil
 	default:
-		panic(`not support type`)
+		return nil, fmt.Errorf(`not support thrift type: %v`, tType.Type)
 	}
 }
 
-type Option struct {
-	Generator
+type ThriftExampleOption struct {
+	Generator ThriftGenerator
 }
 
-func (*Option) GetListSize() int {
+func NewThriftExampleOption() *ThriftExampleOption {
+	return &ThriftExampleOption{Generator: NewFixedGenerator()}
+}
+
+func (*ThriftExampleOption) GetListSize() int {
 	return 1
 }
 
-func (*Option) GetMapSize() int {
+func (*ThriftExampleOption) GetMapSize() int {
 	return 1
 }
 
-type Generator interface {
+type ThriftGenerator interface {
 	Instance(t descriptor.Type) interface{}
 }
 
-type fixedGenerator struct{}
+type fixedThriftGenerator struct{}
 
-func NewFixedGenerator() *fixedGenerator {
-	return &fixedGenerator{}
+func NewFixedGenerator() *fixedThriftGenerator {
+	return &fixedThriftGenerator{}
 }
 
 var fixedTypeInstanceMap = map[descriptor.Type]interface{}{
@@ -120,7 +141,7 @@ var fixedTypeInstanceMap = map[descriptor.Type]interface{}{
 	descriptor.STRING: "",
 }
 
-func (f *fixedGenerator) Instance(t descriptor.Type) interface{} {
+func (f *fixedThriftGenerator) Instance(t descriptor.Type) interface{} {
 	if i, ok := fixedTypeInstanceMap[t]; ok {
 		return i
 	}
