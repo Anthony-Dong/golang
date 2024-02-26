@@ -30,7 +30,7 @@ function go_install(){
 function format_golang_file () {
   project_dir=$(realpath "$1")
 	# shellcheck disable=SC2044
-	for elem in $(find "${project_dir}" -name '*.go'); do
+	for elem in $(find "${project_dir}" -name '*.go' | grep -v 'example/'); do
 #	  echo "format ${elem}"
 		gofmt -w "${elem}" 2>&1;
 		goimports -w -srcdir "${project_dir}" -local "$2" "${elem}" 2>&1;
