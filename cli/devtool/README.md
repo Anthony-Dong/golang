@@ -18,7 +18,7 @@ Commands:
   help        Help about any command
   hexo        The Hexo tool
   json        The Json tool
-  proxy       Proxy thrift requests
+  proxy       Proxy and Capture thrift/http/https requests
   run         Run task templates
   tcpdump     Decode tcpdump file & stream
   upload      File upload tool
@@ -104,19 +104,6 @@ sudo apt-get install -y libpcap-dev
 
 ## [CPP工具 - cpp](../../command/cpp)
 
-## [代理工具 - proxy](../../command/proxy)
+## [Thrift/HTTPS/HTTP代理和抓包工具](../../command/proxy)
 
-## [Curl - proxy](../../command/curl)
-
-
-# 其他
-
-## 如何测试Thrift请求？ 
-
-本文的测试用例都采用的 [kitex-example](https://github.com/cloudwego/kitex-examples) 项目的用例
-
-```shell
-mkdir -p example
-cd example
-git clone git@github.com:cloudwego/kitex-examples.git --branch v0.2.3 --depth 1
-```
+## [像curl一样发起Thrift请求](../../command/curl)

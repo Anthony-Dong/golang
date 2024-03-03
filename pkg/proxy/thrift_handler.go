@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"strings"
-	"sync"
 	"time"
 
+	"github.com/anthony-dong/golang/pkg/proxy/record"
+
 	"github.com/anthony-dong/golang/pkg/logs"
-	"github.com/anthony-dong/golang/pkg/utils"
 
 	"github.com/anthony-dong/golang/pkg/codec/thrift_codec"
 )
@@ -21,79 +20,86 @@ type thriftHandler struct {
 	WriteTimeout  time.Duration
 	KeepaliveTime time.Duration
 
-	Recorder func(payload interface{}, isReq bool)
+	DialAddr Addr
+	Record   *record.ThriftRecorder
 }
 
-func NewThriftHandler(r func(payload interface{}, isReq bool)) *thriftHandler {
+func NewThriftHandler(dial string, storage record.Storage) *thriftHandler {
 	return &thriftHandler{
 		KeepaliveTime: time.Second * 15,
 		ReadTimeout:   time.Minute * 3,
 		WriteTimeout:  time.Minute * 3,
-		Recorder:      r,
+		Record:        record.NewThriftRecorder(storage),
+		DialAddr:      MustParseAddr(dial),
 	}
 }
 
-func (t *thriftHandler) HandlerConn(readConn net.Conn, dialAddr Addr) error {
-	writeConn, err := dialAddr.Dial()
+func (t *thriftHandler) HandlerConn(readConn net.Conn) error {
+	writeConn, err := t.DialAddr.Dial()
 	if err != nil {
 		return err
 	}
+	defer writeConn.Close()
+
 	ctx := context.Background()
-	defer func() {
-		if err := writeConn.Close(); err != nil {
-			logs.CtxWarn(ctx, "conn [%s] close find err: %v", writeConn.RemoteAddr(), err)
-			return
+	updateReadTimeout := func(conn net.Conn) {
+		if t.ReadTimeout > 0 {
+			_ = conn.SetReadDeadline(time.Now().Add(t.ReadTimeout))
 		}
-	}()
-	if t.Recorder == nil {
-		t.Recorder = nonRecorder
+	}
+	updateWriteTimeout := func(conn net.Conn) {
+		if t.ReadTimeout > 0 {
+			_ = conn.SetWriteDeadline(time.Now().Add(t.ReadTimeout))
+		}
 	}
 	count := 0
 	reader := bufio.NewReader(readConn)
 	writer := bufio.NewReader(writeConn)
 	for {
 		if count > 0 {
-			// keep alive 10s
-			if t.KeepaliveTime > 0 {
-				_ = readConn.SetReadDeadline(time.Now().Add(t.KeepaliveTime))
+			if t.KeepaliveTime <= 0 {
+				return nil
 			}
+			_ = readConn.SetReadDeadline(time.Now().Add(t.KeepaliveTime))
 			if _, err := reader.Peek(1); err != nil {
 				if err == io.EOF {
-					logs.CtxDebug(ctx, "conn [%s] close", readConn.RemoteAddr())
 					return nil
 				}
 				logs.CtxWarn(ctx, "conn [%s] find err: %v", readConn.RemoteAddr(), err)
 				return err
 			}
 		}
-		if t.ReadTimeout > 0 {
-			_ = readConn.SetReadDeadline(time.Now().Add(t.ReadTimeout))
-		}
+
+		start := time.Now()
+
+		updateReadTimeout(readConn)
 		req, reqBuffer, err := t.ReadMessage(reader)
 		if err != nil {
 			return err
 		}
-		t.Recorder(req, true)
-		if t.WriteTimeout > 0 {
-			_ = writeConn.SetWriteDeadline(time.Now().Add(t.WriteTimeout))
-		}
+
+		updateWriteTimeout(writeConn)
 		if _, err := writeConn.Write(reqBuffer); err != nil {
 			return err
 		}
-		if t.ReadTimeout > 0 {
-			_ = writeConn.SetReadDeadline(time.Now().Add(t.ReadTimeout))
-		}
+
+		updateReadTimeout(writeConn)
 		resp, respBuffer, err := t.ReadMessage(writer)
 		if err != nil {
 			return err
 		}
-		t.Recorder(resp, false)
-		if t.WriteTimeout > 0 {
-			_ = readConn.SetWriteDeadline(time.Now().Add(t.WriteTimeout))
-		}
+
+		updateWriteTimeout(readConn)
 		if _, err := readConn.Write(respBuffer); err != nil {
 			return err
 		}
+
+		_ = t.Record.Record(ctx, req, resp, &record.ThriftExtraInfo{
+			SrcAddr: readConn.RemoteAddr(),
+			DstAddr: writeConn.RemoteAddr(),
+			Time:    start,
+			Spend:   time.Now().Sub(start),
+		})
 		count = count + 1
 	}
 }
@@ -112,20 +118,4 @@ func (t *thriftHandler) ReadMessage(_reader *bufio.Reader) (*thrift_codec.Thrift
 	result.MetaInfo = thrift_codec.GetMateInfo(ctx)
 	result.Protocol = protocol
 	return result, reader.buffer.Bytes(), nil
-}
-
-func nonRecorder(payload interface{}, isReq bool) {
-}
-
-var consoleRecorderLock sync.Mutex
-
-func ConsoleRecorder(payload interface{}, isReq bool) {
-	consoleRecorderLock.Lock()
-	defer consoleRecorderLock.Unlock()
-	if isReq {
-		logs.StdOut(strings.Repeat(">", 30) + " [CALL] " + time.Now().Format(utils.FormatTimeV1) + " " + strings.Repeat(">", 30))
-	} else {
-		logs.StdOut(strings.Repeat("<", 29) + " [REPLY] " + time.Now().Format(utils.FormatTimeV1) + " " + strings.Repeat("<", 30))
-	}
-	logs.StdOut(utils.ToJson(payload, true))
 }

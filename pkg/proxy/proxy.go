@@ -12,21 +12,19 @@ import (
 
 type Proxy struct {
 	ListenAddr Addr
-	DialAddr   Addr
 	Handler    Handler
 }
 
 type Handler interface {
-	HandlerConn(readConn net.Conn, dialAddr Addr) error
+	HandlerConn(readConn net.Conn) error
 }
 
-func NewProxy(listen, dial string, h Handler) *Proxy {
-	if h == nil {
-		panic(fmt.Errorf(`invalid handler`))
+func NewProxy(listen string, h Handler) *Proxy {
+	if h == nil || listen == "" {
+		panic(fmt.Errorf(`invalid conn handler and listen addr`))
 	}
 	return &Proxy{
 		ListenAddr: MustParseAddr(listen),
-		DialAddr:   MustParseAddr(dial),
 		Handler:    h,
 	}
 }
@@ -54,13 +52,18 @@ func (p *Proxy) Run() error {
 					logs.Error("conn [%s] find panic: %v, stack:\n%s", conn.RemoteAddr(), r, debug.Stack())
 				}
 				if err := conn.Close(); err != nil {
-					logs.Error("conn [%s] close find err: %v", conn.RemoteAddr(), err)
+					if !strings.Contains(err.Error(), "use of closed network connection") {
+						logs.Error("conn [%s] close find err: %v", conn.RemoteAddr(), err)
+					}
 					return
 				}
 				logs.Debug("conn [%s] closed", conn.RemoteAddr())
 			}()
-			if err := p.Handler.HandlerConn(conn, p.DialAddr); err != nil {
+			if err := p.Handler.HandlerConn(conn); err != nil {
 				if strings.Contains(err.Error(), "unknown protocol") {
+					return
+				}
+				if strings.Contains(err.Error(), "use of closed network connection") {
 					return
 				}
 				logs.Error("conn [%s] find err: %v", conn.RemoteAddr(), err)
