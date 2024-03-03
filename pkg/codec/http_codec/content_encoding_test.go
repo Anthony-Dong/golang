@@ -2,6 +2,7 @@ package http_codec
 
 import (
 	"bytes"
+	"net/http"
 	"testing"
 )
 
@@ -12,7 +13,7 @@ func TestEncodeHttpBody(t *testing.T) {
 		if err := EncodeHttpBody(w, map[string][]string{}, []byte(content), encoding); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := DecodeHttpBody(w, map[string][]string{
+		if _, err := DecodeHttpBody(w, http.Header{
 			ContentEncoding: {encoding},
 		}, true); err != nil {
 			t.Fatal(err)

@@ -42,7 +42,7 @@ func (t *ThriftRecorder) Record(ctx context.Context, req *thrift_codec.ThriftMes
 		if resp.MessageType == thrift_codec.EXCEPTION {
 			status = "EXCEPTION"
 		}
-		logs.CtxInfo(ctx, "[ID-%d] %s->%s [%s] [%s] [%s]", extra.ID, extra.SrcAddr, extra.DstAddr, req.Method, status, extra.Spend)
+		logs.CtxInfo(ctx, "[ID-%s] %s->%s [%s] [%s] [%s]", extra.ID, extra.SrcAddr, extra.DstAddr, req.Method, status, extra.Spend)
 		if t.Storage == nil {
 			return nil
 		}

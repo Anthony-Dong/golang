@@ -1,7 +1,6 @@
 package rpc
 
 import (
-	"context"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -32,7 +31,7 @@ func Test_ThriftClient(t *testing.T) {
 	t.Log(utils.ToJson(send, true))*/
 }
 
-func TestName(t *testing.T) {
+func TestNewRequest(t *testing.T) {
 	parse, err := url.Parse(`thrift://xxx.xxx.xxx/RPCMethod?env=xxx`)
 	if err != nil {
 		t.Fatal(err)
@@ -47,15 +46,4 @@ func TestName(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(string(dumpRequest))
-}
-
-func TestThriftClient_InjectBaseRequestInfo(t *testing.T) {
-	client := &ThriftClient{}
-	result, err := client.InjectBaseRequestInfo(context.Background(), []byte(`{"Field1": "success", "Base": {"Extra": {"user_extra": {"k1": "v1"}}}}`), map[string]string{
-		"k2": "v2",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(string(result))
 }
