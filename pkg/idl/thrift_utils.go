@@ -31,26 +31,13 @@ func fixThriftIDLForKitex(idls map[string]string) map[string]string {
 	return result
 }
 
-func loadThriftDescriptorProviderV1(main string) (_ generic.DescriptorProvider, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf(`parse(v1) thrift idl find err: %v`, r)
-		}
-	}()
-	provider, err := generic.NewThriftFileProvider(main)
-	if err != nil {
-		return nil, fmt.Errorf("parse(v1) thrift idl find err: %v", err)
-	}
-	return provider, nil
-}
-
-func loadThriftDescriptorProvider(main string, idls map[string]string) (_ generic.DescriptorProvider, err error) {
+func loadThriftDescriptorProvider(main string, idls map[string]string) (provider generic.DescriptorProvider, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf(`parse thrift idl find err: %v`, r)
 		}
 	}()
-	provider, err := generic.NewThriftContentWithAbsIncludePathProvider(main, idls)
+	provider, err = generic.NewThriftContentWithAbsIncludePathProvider(main, idls)
 	if err != nil {
 		return nil, fmt.Errorf("parse thrift idl find err: %v", err)
 	}

@@ -195,3 +195,17 @@ func PtrBool(p *bool, v ...bool) bool {
 	}
 	return *p
 }
+
+func FromPtr[T any](v *T, defaultV ...T) (_ T) {
+	if v == nil {
+		for _, elem := range defaultV {
+			return elem
+		}
+		return
+	}
+	return *v
+}
+
+func ToPtr[T any](v T) *T {
+	return &v
+}

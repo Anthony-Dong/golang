@@ -62,12 +62,12 @@ func (c *HostClient) doRequest(ctx context.Context, method string, path string, 
 		ctx = context.Background()
 	}
 	start := time.Now()
-	log := logs.Builder().Info().String("http request:")
+	log := logs.Builder().Debug().String("http request:")
 	defer func() {
 		log.KV("spend", fmt.Sprintf("%dms", time.Now().Sub(start)/time.Millisecond))
 		if _err != nil {
 			log.Error()
-			log.KV("err", fmt.Sprintf(`{%s}`, _err.Error()))
+			log.KV("err", _err.Error())
 		}
 		log.Emit(ctx)
 	}()
@@ -111,17 +111,18 @@ func (c *HostClient) doRequest(ctx context.Context, method string, path string, 
 	log.KV("method", request.Method)
 	log.KV("host", fmt.Sprintf("%s://%s", request.URL.Scheme, request.URL.Host))
 	log.KV("path", request.URL.Path)
-	log.KV("query", fmt.Sprintf(`{%s}`, request.URL.RawQuery))
+	log.KV("query", "{"+request.URL.RawQuery+"}")
 	response, err := (&http.Client{Timeout: timeout}).Do(request)
 	if err != nil {
 		return err
 	}
 	defer response.Body.Close()
-	log.KV("status_code", response.StatusCode)
+	log.KV("http_code", response.StatusCode)
 	respBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return fmt.Errorf(`read response body find err: %v. http code: %d`, err, response.StatusCode)
 	}
+	log.KV("resp_size", len(respBody))
 	if c.Binding == nil {
 		c.Binding = &defaultBinding{}
 	}

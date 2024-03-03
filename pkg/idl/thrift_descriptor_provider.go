@@ -17,8 +17,8 @@ func (m *defaultDescriptorProvider) DescriptorProvider() (generic.DescriptorProv
 	if err != nil {
 		return nil, err
 	}
-	if provider, err := loadThriftDescriptorProvider(idl.Main, idl.IDLs); err == nil {
-		return provider, nil
-	}
+	//if provider, err := loadThriftDescriptorProvider(idl.Main, idl.IDLs); err == nil {
+	//	return provider, nil
+	//}
 	return loadThriftDescriptorProvider(idl.Main, fixThriftIDLForKitex(idl.IDLs))
 }

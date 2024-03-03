@@ -41,6 +41,12 @@ func SetPrinter(printer func(output string)) {
 	print = printer
 }
 
+func SetPrinterStdError() {
+	print = func(output string) {
+		fmt.Fprint(os.Stderr, output)
+	}
+}
+
 func SetLevelString(level string) {
 	ll, isExist := stringLevelMap[level]
 	if !isExist {

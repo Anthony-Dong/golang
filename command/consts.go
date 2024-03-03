@@ -1,9 +1,17 @@
 package command
 
-const UserHomeAppConfigFile = ".devtool/config.yaml"
-const AppConfigFile = ".devtool.yaml"
+import (
+	"path/filepath"
 
-const AppVersion = "v0.0.2"
+	"github.com/anthony-dong/golang/pkg/utils"
+)
+
+const AppConfigFile = "devtool.yaml"
+const AppHomeDir = ".devtool"
+
+const AppVersion = "v0.0.3"
 const AppName = "devtool"
 
-const AppHomeDir = ".devtool"
+func GetAppHomeDir() string {
+	return filepath.Join(utils.GetUserHomeDir(), AppHomeDir)
+}

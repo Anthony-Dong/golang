@@ -1,0 +1,117 @@
+{
+package parser
+}
+
+Grammar <- values:Conditions+ EOF {
+	return values.([]interface{})[0].(*Conditions), nil
+} / SyntaxError
+
+
+SyntaxError <- . {
+	return nil, errors.New("parser: syntax error")
+}
+
+
+ConditionGroup <- '(' __ values: Conditions* __ ')' {
+    if len(values.([]interface{})) == 0 {
+        return nil, nil
+    }
+    return values.([]interface{})[0].(*Conditions), nil
+}
+
+Conditions <- values:( ( Condition / ConditionGroup ) __ LogicalOperator? __ )+ {
+	head := &Conditions{}
+	cur := head
+	lastIndex := len(values.([]interface{})) - 1
+	for index, value := range values.([]interface{}) {
+		args := value.([]interface{})
+		switch arg0 := args[0].(type) {
+		case *Condition:
+			cur.Value = arg0
+		case *Conditions:
+			cur.Group = arg0
+		}
+		cur.Logical, _ = args[2].(string)
+		if index == lastIndex {
+			break
+		}
+		cur.Next = &Conditions{}
+		cur = cur.Next
+	}
+	return head, nil
+}
+
+LogicalOperator <- ( "and" / "or" ) {
+    return string(c.text), nil
+}
+
+Condition <- key:Identifier __ op:Operator __ value:( Double / Integer / String / List) {
+	ret := &Condition{
+		Key:      key.(string),
+		Operator: op.(string),
+	}
+	if vs, isOK := value.([]string); isOK {
+		ret.Values = vs
+	}
+	if v, isOK := value.(string); isOK {
+		ret.Value = v
+	}
+	return ret, nil
+}
+
+
+List <- '(' __ values:((Double/Integer/String) __ ListSeparator? __)* __ ')' {
+	result := make([]string, 0)
+	for _, value := range values.([]interface{}) {
+		args, _ := value.([]interface{})
+		result = append(result, args[0].(string))
+	}
+	return result, nil
+}
+
+String <- Literal
+
+Integer <- '-'? Digit+ {
+	if _, err := strconv.ParseInt(string(c.text), 10, 64); err != nil {
+		return nil, err
+	}
+	return string(c.text), nil
+}
+
+Double ← [+-]? Digit+ '.' Digit+ {
+	if _, err := strconv.ParseFloat(string(c.text), 64); err != nil {
+		return nil, err
+	}
+	return string(c.text), nil
+}
+
+Literal <- (('"' (`\"` / [^"])* '"') / ('\'' (`\'` / [^'])* '\'')) {
+	if len(c.text) == 0 {
+		return "", nil
+	}
+    switch c.text[0] {
+    case '\'':
+        return strings.Replace(string(c.text[1:len(c.text)-1]), `\'`, `'`, -1), nil
+    case '"':
+        return strings.Replace(string(c.text[1:len(c.text)-1]), `\"`, `"`, -1), nil
+    }
+    return string(c.text) ,nil
+}
+
+
+Operator <- ( "in" / ">=" / "<=" / "!=" / "=" / ">" / "<" ) {
+    return string(c.text), nil
+}
+
+Identifier <- (Letter / '_')+ (Letter / Digit / '.' / '_' / '[' / ']' )* {
+	return string(c.text), nil
+}
+
+ListSeparator <- [,]
+Letter <- [A-Za-z]
+Digit <- [0-9]
+
+__ <- (_)*
+_ <- [ \n\t\r]+
+
+EOF <- !.

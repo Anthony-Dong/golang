@@ -1,10 +1,25 @@
 package command
 
-type AppConfig struct {
-	Verbose    bool   `yaml:"-"`
-	LogLevel   string `yaml:"-"`
-	ConfigFile string `yaml:"-"`
+import (
+	"context"
 
+	"github.com/anthony-dong/golang/pkg/rpc"
+)
+
+type AppConfig struct {
+	Verbose    bool
+	LogLevel   string
+	ConfigFile string
+	AppName    string
+	AppVersion string
+
+	StaticConfig
+	CurlConfig *CurlConfig
+
+	//Middlewares []func(config *AppConfig) Middleware
+}
+
+type StaticConfig struct {
 	UploadConfig  *UploadConfig  `yaml:"Upload,omitempty"`
 	HexoConfig    *HexoConfig    `yaml:"Hexo,omitempty"`
 	RunTaskConfig *RunTaskConfig `yaml:"RunTask,omitempty"`
@@ -32,4 +47,8 @@ type OSSConfig struct {
 type HexoConfig struct {
 	Ignore  []string `yaml:"Ignore,omitempty"`
 	KeyWord []string `yaml:"KeyWord,omitempty"`
+}
+
+type CurlConfig struct {
+	NewClient func(ctx context.Context, request *rpc.Request, idl *rpc.IDLInfo) (rpc.Client, error)
 }

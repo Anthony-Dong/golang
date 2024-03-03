@@ -3,7 +3,11 @@ package logs
 import (
 	"bytes"
 	"context"
+	"encoding"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"strconv"
 )
 
 type builder struct {
@@ -20,7 +24,7 @@ func (kv kv) String() string {
 	if kv.key == "__str__" {
 		return kv.value.(string)
 	}
-	return fmt.Sprintf("%s=%v", kv.key, kv.value)
+	return fmt.Sprintf("%s=%s", kv.key, toString(kv.value))
 }
 
 func (b *builder) Debug() *builder {
@@ -78,4 +82,81 @@ func (b *builder) Emit(ctx context.Context) {
 
 func Builder() *builder {
 	return &builder{}
+}
+
+func toString(value interface{}) string {
+	switch v := value.(type) {
+	case string:
+		return v
+	case uint8, uint16, uint32, uint64:
+		convertUint64 := func(value interface{}) uint64 {
+			switch v := value.(type) {
+			case uint8:
+				return uint64(v)
+			case uint16:
+				return uint64(v)
+			case uint32:
+				return uint64(v)
+			case uint64:
+				return v
+			default:
+				panic("ToString uint error")
+			}
+		}
+		return strconv.FormatUint(convertUint64(value), 10)
+	case int, int8, int16, int32, int64:
+		convertInt64 := func(value interface{}) int64 {
+			switch v := value.(type) {
+			case int8:
+				return int64(v)
+			case int16:
+				return int64(v)
+			case int32:
+				return int64(v)
+			case int64:
+				return v
+			case int:
+				return int64(v)
+			default:
+				panic("ToString int error")
+			}
+		}
+		return strconv.FormatInt(convertInt64(value), 10)
+	case bool:
+		if v {
+			return "true"
+		}
+		return "false"
+	case float32:
+		return strconv.FormatFloat(float64(v), 'f', -1, 32)
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64)
+	case error:
+		return v.Error()
+	case fmt.Stringer:
+		return v.String()
+	case []byte:
+		return base64.StdEncoding.EncodeToString(v)
+	default:
+		if v == nil {
+			return ""
+		}
+		if str, isOk := value.(fmt.Stringer); isOk {
+			return str.String()
+		}
+		if codec, isOk := value.(encoding.TextMarshaler); isOk {
+			if text, err := codec.MarshalText(); err == nil {
+				return string(text)
+			}
+		}
+		if codec, isOk := value.(json.Marshaler); isOk {
+			if text, err := codec.MarshalJSON(); err == nil {
+				return string(text)
+			}
+		}
+		if result, err := json.Marshal(v); err == nil {
+			return string(result)
+		}
+		return fmt.Sprintf("%v", value)
+	}
 }

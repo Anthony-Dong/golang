@@ -248,12 +248,6 @@ func GetProtocol(ctx context.Context, reader reader) (Protocol, error) {
 	if IsUnframedBinary(reader, FrameHeaderSize) {
 		return FramedBinary, nil
 	}
-	if IsUnframedUnStrictBinary(reader, 0) {
-		return UnframedUnStrictBinary, nil
-	}
-	if IsUnframedUnStrictBinary(reader, FrameHeaderSize) {
-		return FramedUnStrictBinary, nil
-	}
 	if IsUnframedCompact(reader, 0) {
 		return UnframedCompact, nil
 	}
@@ -282,13 +276,25 @@ func GetProtocol(ctx context.Context, reader reader) (Protocol, error) {
 			return UnknownProto, err
 		}
 		if IsUnframedBinary(reader, size) {
-			_ = utils.SkipReader(reader, size)
+			if err := utils.SkipReader(reader, size); err != nil {
+				return UnknownProto, err
+			}
 			return UnframedBinaryMeshHeader, nil
 		}
 		if IsFramedBinary(reader, size) {
-			_ = utils.SkipReader(reader, size)
+			if err := utils.SkipReader(reader, size); err != nil {
+				return UnknownProto, err
+			}
 			return FramedBinaryMeshHeader, nil
 		}
+	}
+	// UnStrict protocol 这个需要读取的buffer比较大(遇到buffer不满足的时候会长时间block)，目前没有太好的优化手动，因为放在最后面了
+	// 还有一种解决方案就是限制name_len的大小，理论上name不会有很长，撑死了也就100个字符左右，但是遇到小包也会阻塞
+	if IsUnframedUnStrictBinary(reader, 0) {
+		return UnframedUnStrictBinary, nil
+	}
+	if IsUnframedUnStrictBinary(reader, FrameHeaderSize) {
+		return FramedUnStrictBinary, nil
 	}
 	return UnknownProto, thrift.NewTProtocolExceptionWithType(
 		thrift.UNKNOWN_PROTOCOL_EXCEPTION,

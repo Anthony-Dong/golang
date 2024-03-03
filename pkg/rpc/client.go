@@ -4,41 +4,66 @@ import (
 	"context"
 	"encoding/json"
 	"time"
+
+	"github.com/anthony-dong/golang/pkg/utils"
 )
 
+const ProtocolThrift = "thrift"
+
 type Request struct {
-	Service  string          `json:"service,omitempty"`  // service name
-	Method   string          `json:"method,omitempty"`   // rpc service method
-	Body     json.RawMessage `json:"body,omitempty"`     // request body
-	Endpoint Endpoint        `json:"endpoint,omitempty"` // request endpoint
+	Protocol  string             `json:"protocol,omitempty"`   // thrift/grpc
+	Service   string             `json:"service,omitempty"`    // rpc service name
+	RPCMethod string             `json:"rpc_method,omitempty"` // rpc service method
+	Body      json.RawMessage    `json:"body,omitempty"`       // request body
+	Header    []*KV              `json:"header,omitempty"`     // request header
+	Addr      string             `json:"addr,omitempty"`       // request addr
+	Tag       []*KV              `json:"tag,omitempty"`        // custom env/cluster
+	Timeout   utils.JsonDuration `json:"timeout,omitempty"`    // timeout
+
+	EnableModifyRequest bool `json:"enable_modify_request,omitempty"`
 }
 
-type Endpoint struct {
-	Addr string            `json:"addr,omitempty"`
-	Tag  map[string]string `json:"tag,omitempty"` // custom env/cluster
+func GetValue(kv []*KV, key string) string {
+	for _, elem := range kv {
+		if elem.Key == key {
+			return elem.Value
+		}
+	}
+	return ""
 }
 
 type Response struct {
-	Body       json.RawMessage `json:"body,omitempty"`
-	TotalSpend time.Duration   `json:"total_spend,omitempty"`
-	Spend      time.Duration   `json:"spend,omitempty"`
-	Extra      ResponseExtra   `json:"extra,omitempty"`
-}
-
-type ResponseExtra struct {
-	Endpoint
-	MetaInfo map[string]string `json:"meta_info,omitempty"`
+	Body    json.RawMessage `json:"body,omitempty"`
+	IsError bool            `json:"is_error,omitempty"`
+	Spend   time.Duration   `json:"spend,omitempty"`
+	Header  []*KV           `json:"header,omitempty"`
 }
 
 type Method struct {
 	RPCMethod string `json:"rpc_method,omitempty"`
-	Desc      string `json:"desc,omitempty"`
-	Method    string `json:"method,omitempty"`
-	Path      string `json:"path,omitempty"`
+}
+
+type KV struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+func NewKV(key, value string) *KV {
+	return &KV{Key: key, Value: value}
+}
+
+type IDLInfo struct {
+	Main    string   `json:"main"`
+	Include []string `json:"include"`
+	Branch  string   `json:"branch"`
+}
+
+type ExampleCode struct {
+	Body json.RawMessage `json:"body"`
 }
 
 type Client interface {
-	Send(ctx context.Context, req *Request) (*Response, error)
-	ExampleCode(ctx context.Context, request *Request) (string, error)
-	MethodList(ctx context.Context, req *Request) ([]*Method, error)
+	Do(ctx context.Context, req *Request) (*Response, error)
+	ListMethods(ctx context.Context) ([]*Method, error)
+	GetExampleCode(ctx context.Context, method *Method) (*ExampleCode, error)
 }

@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type WReader interface {
+type BufferedWReader interface {
 	io.Reader
 	io.Writer
 	Peek(int) ([]byte, error)

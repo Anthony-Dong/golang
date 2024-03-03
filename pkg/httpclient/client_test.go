@@ -13,6 +13,7 @@ import (
 
 func TestHostClient_Get(t *testing.T) {
 	defer logs.Flush()
+	logs.SetLevel(logs.LevelDebug)
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		assert.Equal(t, request.Method, http.MethodGet)
 		assert.Equal(t, request.URL.Path, "/api/v1/get")
@@ -25,7 +26,7 @@ func TestHostClient_Get(t *testing.T) {
 	defer server.Close()
 	resp := ""
 	client := HostClient{Host: server.URL, Auth: NewCookieAuth("xxx")}
-	if err := client.Get(context.Background(), "/api/v1/get", map[string]string{"q": "value"}, &resp); err != nil {
+	if err := client.Get(context.Background(), "/api/v1/get", map[string]string{"q": "value", "c": "china"}, &resp); err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(t, resp, "hello world")

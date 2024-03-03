@@ -32,5 +32,6 @@ struct Response {
 
 
 service APIService {
-    Response RPCAPI1 (1: Request req),
+    Response RPCAPI1 (1: Request req) (api.get='/api/v1/query'),
+    Response RPCAPI2 (1: Request req) (api.get='/api/v1/query'),
 }

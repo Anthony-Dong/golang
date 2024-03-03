@@ -1,11 +1,16 @@
 package cli
 
 import (
+	"context"
+
+	"github.com/anthony-dong/golang/command/proxy"
+
 	"github.com/spf13/cobra"
 
 	"github.com/anthony-dong/golang/command"
 	"github.com/anthony-dong/golang/command/codec"
 	"github.com/anthony-dong/golang/command/cpp"
+	"github.com/anthony-dong/golang/command/curl"
 	"github.com/anthony-dong/golang/command/gen"
 	"github.com/anthony-dong/golang/command/git"
 	"github.com/anthony-dong/golang/command/golang"
@@ -14,7 +19,6 @@ import (
 	"github.com/anthony-dong/golang/command/middleware"
 	"github.com/anthony-dong/golang/command/run"
 	"github.com/anthony-dong/golang/command/tcpdump"
-	"github.com/anthony-dong/golang/command/turl"
 	"github.com/anthony-dong/golang/command/upload"
 )
 
@@ -22,26 +26,31 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 	if config == nil {
 		config = &command.AppConfig{}
 	}
+	if config.AppName == "" {
+		config.AppName = command.AppName
+	}
+	if config.AppVersion == "" {
+		config.AppVersion = command.AppVersion
+	}
 	var cmd = &cobra.Command{
-		Use:                   command.AppName,
-		Version:               command.AppVersion,
+		Use:                   config.AppName,
+		Version:               config.AppVersion,
 		CompletionOptions:     cobra.CompletionOptions{DisableDefaultCmd: true},
 		SilenceUsage:          true, // 禁止失败打印 --help
 		SilenceErrors:         true, // 禁止框架打印异常
 		DisableFlagsInUseLine: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+			if ctx == nil {
+				ctx = context.Background()
+			}
 			if err := middleware.NewInitLoggerMv(config)(cmd, args); err != nil {
 				return err
 			}
 			if err := middleware.NewInitConfigMv(config)(cmd, args); err != nil {
 				return err
 			}
-			for _, mv := range config.Middlewares {
-				if err := mv(config)(cmd, args); err != nil {
-					return err
-				}
-			}
-			//logs.Debug("start cmd: %s, cmd.args: %s, os.args: %s", command.AppName, utils.ToJson(args), utils.ToJson(os.Args))
+			cmd.SetContext(context.WithValue(ctx, command.AppConfigCtxKey, config))
 			return nil
 		},
 	}
@@ -56,10 +65,10 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 	if err := command.AddCommand(cmd, jsontool.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := command.AddConfigCommand(cmd, config, hexo.NewCommand); err != nil {
+	if err := command.AddCommand(cmd, hexo.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := command.AddConfigCommand(cmd, config, upload.NewCommand); err != nil {
+	if err := command.AddCommand(cmd, upload.NewCommand); err != nil {
 		return nil, err
 	}
 	if err := command.AddCommand(cmd, gen.NewCommand); err != nil {
@@ -68,19 +77,22 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 	if err := command.AddCommand(cmd, tcpdump.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := command.AddConfigCommand(cmd, config, run.NewCommand); err != nil {
+	if err := command.AddCommand(cmd, run.NewCommand); err != nil {
 		return nil, err
 	}
 	if err := command.AddCommand(cmd, golang.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := command.AddCommand(cmd, turl.NewTurlCommand); err != nil {
+	if err := command.AddCommand(cmd, curl.NewCurlCommand); err != nil {
 		return nil, err
 	}
 	if err := command.AddCommand(cmd, git.NewCommand); err != nil {
 		return nil, err
 	}
 	if err := command.AddCommand(cmd, cpp.NewCommand); err != nil {
+		return nil, err
+	}
+	if err := command.AddCommand(cmd, proxy.NewCommand); err != nil {
 		return nil, err
 	}
 	return cmd, nil

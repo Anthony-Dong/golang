@@ -23,8 +23,12 @@ const (
 	ContentEncoding_Snappy  = "snappy"
 )
 
+type Header interface {
+	Get(key string) string
+}
+
 // DecodeHttpBody https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Content-Encoding
-func DecodeHttpBody(r io.Reader, header http.Header, resolveDefault bool) ([]byte, error) {
+func DecodeHttpBody(r io.Reader, header Header, resolveDefault bool) ([]byte, error) {
 	if r == nil {
 		return []byte{}, nil
 	}
