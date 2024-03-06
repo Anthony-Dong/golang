@@ -142,7 +142,7 @@ func (p *ProtocGen) Gen(ctx context.Context) (*ProtocGenResult, error) {
 	cmd := exec.CommandContext(ctx, p.ProtocCommand, command...)
 	cmd.Stdout = &result.StdOut
 	cmd.Stderr = &result.StdError
-	if err := utils.RunCmd(cmd, "protoc", false); err != nil {
+	if err := utils.RunCmd(cmd, "protoc"); err != nil {
 		return nil, err
 	}
 	return &result, nil

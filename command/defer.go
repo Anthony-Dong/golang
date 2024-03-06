@@ -1,6 +1,7 @@
 package command
 
 import (
+	"os"
 	"runtime/debug"
 	"sync"
 
@@ -22,11 +23,14 @@ func Defer(task func()) {
 
 func Close() {
 	closeOnce.Do(func() {
+		if len(deferTask) > 0 {
+			logs.Builder().Info().String("[defer]").KV("pid", os.Getpid()).String("start run the defer tasks").Emit(nil)
+		}
 		for index := len(deferTask) - 1; index >= 0; index-- {
 			func() {
 				defer func() {
 					if r := recover(); r != nil {
-						logs.Error("CloseDeferTask panic: %v, stack: %s", r, debug.Stack())
+						logs.Error("run task panic: %v, stack: %s", r, debug.Stack())
 					}
 				}()
 				deferTask[index]()

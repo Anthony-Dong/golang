@@ -43,7 +43,7 @@ func NewGoRunCommand() (*cobra.Command, error) {
 				command = exec.Command("go", append([]string{"run", "-v", runPkg}, args...)...)
 			}
 			command.Env = append(os.Environ(), runEnv...)
-			return utils.RunCmd(command, "", false)
+			return utils.RunCmd(command, "")
 		},
 	}
 	cmd.Flags().BoolVar(&isDebug, "debug", false, "enable debug")
@@ -72,7 +72,7 @@ func NewGoTestCommand() (*cobra.Command, error) {
 				command = exec.Command("go", "test", "-v", fmt.Sprintf("-run=%s", testName), "-count=1", testPkg)
 			}
 			command.Env = append(os.Environ(), testEnv...)
-			return utils.RunCmd(command, "", false)
+			return utils.RunCmd(command, "")
 		},
 	}
 

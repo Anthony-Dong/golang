@@ -1,0 +1,9 @@
+- name: "任务一"
+  cmd: "devtool" # 命令名称
+  daemon: true # 表示后台运行这个程序，当整个程序组结束时会kill掉此进程的
+  args:
+    - "proxy"
+- name: "任务二"
+  cmd: "echo"
+  args:
+    - "hello world"

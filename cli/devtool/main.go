@@ -16,10 +16,8 @@ func main() {
 	defer command.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	command.Defer(cancel)
-
 	go func() {
-		defer close(done)
+		defer cancel()
 		cmd, err := cli.NewCommand(nil)
 		if err != nil {
 			command.Defer(func() { command.ExitError(err) })
@@ -30,5 +28,8 @@ func main() {
 			return
 		}
 	}()
-	<-done
+	select {
+	case <-done:
+	case <-ctx.Done():
+	}
 }

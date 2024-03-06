@@ -90,14 +90,15 @@ func NewCommand() (*cobra.Command, error) {
 				run := exec.Command(task.Cmd, task.Args...)
 				run.Dir = task.Dir
 				run.Env = append(os.Environ(), task.Env...)
-				logs.Info("%s start run %q", taskId, task.name())
-				if err := utils.RunCmd(run, taskId+" ", task.Daemon); err != nil {
+				logs.Info("%s start run %q task", taskId, task.name())
+				closeFunc, err := utils.RunDaemonCmd(run, taskId+" ", task.Daemon)
+				if err != nil {
 					return fmt.Errorf(`%s run %q retuen err: %v`, taskId, task.name(), err)
 				}
-				if task.Daemon {
-					continue
+				if closeFunc != nil {
+					command.Defer(closeFunc)
 				}
-				logs.Info("%s end run %q", taskId, task.name())
+				logs.Info("%s end run %q task", taskId, task.name())
 			}
 			return nil
 		},

@@ -67,6 +67,9 @@ func (b *builder) KV(key string, value interface{}) *builder {
 }
 
 func (b *builder) Emit(ctx context.Context) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	// todo add buffer cache
 	output := bytes.Buffer{}
 	lastIndex := len(b.kvs) - 1

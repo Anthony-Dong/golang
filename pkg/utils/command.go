@@ -52,7 +52,20 @@ func RunCmdWithShell(cmd *exec.Cmd) error {
 	return nil
 }
 
-func RunCmd(cmd *exec.Cmd, logPrefix string, isDaemon bool) error {
+func RunCmd(cmd *exec.Cmd, logPrefix string) error {
+	if _, err := RunDaemonCmd(cmd, logPrefix, false); err != nil {
+		return err
+	}
+	return nil
+}
+
+func RunCommand(cmd *exec.Cmd) error {
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func RunDaemonCmd(cmd *exec.Cmd, logPrefix string, isDaemon bool) (func(), error) {
 	logs.Info("%scmd name: %s", logPrefix, cmd.Path)
 	if cmd.Dir == "" {
 		dir, err := os.Getwd()
@@ -66,23 +79,17 @@ func RunCmd(cmd *exec.Cmd, logPrefix string, isDaemon bool) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
-		return err
+		return nil, err
 	}
-	logs.Notice("%scmd pid: %d", logPrefix, cmd.Process.Pid)
-	if isDaemon {
-		GoRecoverFunc(func() {
-			if err := cmd.Wait(); err != nil {
-				logs.Error("%scmd wait find err: %v", logPrefix, err)
-			}
-		})
-		logs.Info("%scmd is daemon.", logPrefix)
-		return nil
+	logs.Info("%scmd start success. pid: %d", logPrefix, cmd.Process.Pid)
+	if !isDaemon {
+		logs.Info("%scmd waiting. pid: %d", logPrefix, cmd.Process.Pid)
+		return nil, cmd.Wait()
 	}
-	return cmd.Wait()
-}
-
-func RunCommand(cmd *exec.Cmd) error {
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	return func() {
+		logs.Info("%scmd waiting. pid: %d", logPrefix, cmd.Process.Pid)
+		if err := cmd.Wait(); err != nil {
+			logs.Info("%scmd waiting find err: %v. pid: %d", err)
+		}
+	}, nil
 }
