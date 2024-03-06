@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/anthony-dong/golang/pkg/logs"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,7 +30,9 @@ func main() {
 		}
 	}()
 	select {
-	case <-done:
+	case v, _ := <-done:
+		logs.Debug("process (%d) receive signal (%s) done", os.Getpid(), v)
 	case <-ctx.Done():
+		logs.Debug("process (%d) done", os.Getpid())
 	}
 }

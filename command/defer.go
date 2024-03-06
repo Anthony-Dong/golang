@@ -24,7 +24,7 @@ func Defer(task func()) {
 func Close() {
 	closeOnce.Do(func() {
 		if len(deferTask) > 0 {
-			logs.Builder().Info().String("[defer]").KV("pid", os.Getpid()).String("start run the defer tasks").Emit(nil)
+			logs.Debug("process (%d) start run the defer tasks", os.Getpid())
 		}
 		for index := len(deferTask) - 1; index >= 0; index-- {
 			func() {
