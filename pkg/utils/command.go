@@ -89,7 +89,7 @@ func RunDaemonCmd(cmd *exec.Cmd, logPrefix string, isDaemon bool) (func(), error
 	return func() {
 		logs.Info("%scmd waiting. pid: %d", logPrefix, cmd.Process.Pid)
 		if err := cmd.Wait(); err != nil {
-			logs.Info("%scmd waiting find err: %v. pid: %d", err)
+			logs.Info("%scmd waiting find err: %v. pid: %d", logPrefix, err, cmd.Process.Pid)
 		}
 	}, nil
 }

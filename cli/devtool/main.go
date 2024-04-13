@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"github.com/anthony-dong/golang/pkg/logs"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/anthony-dong/golang/pkg/logs"
 
 	"github.com/anthony-dong/golang/command"
 	"github.com/anthony-dong/golang/command/cli"

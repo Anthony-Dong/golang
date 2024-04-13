@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -200,4 +202,18 @@ func CheckStdInFromPiped() bool {
 	} else {
 		return false
 	}
+}
+
+func ReadDir(dirname string) ([]fs.DirEntry, error) {
+	f, err := os.Open(dirname)
+	if err != nil {
+		return nil, err
+	}
+	dirs, err := f.ReadDir(-1)
+	f.Close()
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(dirs, func(i, j int) bool { return dirs[i].Name() < dirs[j].Name() })
+	return dirs, nil
 }

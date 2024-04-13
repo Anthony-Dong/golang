@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/anthony-dong/golang/command/proxy"
+	"github.com/anthony-dong/golang/command/tcp"
 
 	"github.com/spf13/cobra"
 
@@ -93,6 +94,9 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 		return nil, err
 	}
 	if err := command.AddCommand(cmd, proxy.NewCommand); err != nil {
+		return nil, err
+	}
+	if err := command.AddCommand(cmd, tcp.NewCommand); err != nil {
 		return nil, err
 	}
 	return cmd, nil
