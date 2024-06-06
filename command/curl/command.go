@@ -13,7 +13,7 @@ import (
 	"github.com/anthony-dong/golang/pkg/utils"
 )
 
-func NewCurlCommand() (*cobra.Command, error) {
+func NewCurlCommand(config *command.CurlConfig) (*cobra.Command, error) {
 	reqUrl := ""
 	reqBody := ""
 	reqHeader := make([]string, 0)
@@ -28,27 +28,22 @@ func NewCurlCommand() (*cobra.Command, error) {
 		Example: `curl --url 'thrift://xxx.xxx.xxx/RPCMethod?addr=localhost:8888&env=prod&cluster=default' --header 'h1: v1' --header 'h2: v2' --data '{"k1": "v1"} -v'`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
-			cmdConfig := command.GetAppConfig(ctx).CurlConfig
 			var (
 				client     rpc.Client
 				rpcRequest *rpc.Request
 				err        error
 			)
-			if listMethods {
-				rpcRequest = &rpc.Request{Service: "Mock", RPCMethod: "Mock", Protocol: rpc.ProtocolThrift}
-				goto DoNewClient
-			}
 			rpcRequest, err = rpc.NewRpcRequest(reqUrl, reqHeader, reqBody)
 			if err != nil {
 				return err
 			}
 			rpcRequest.Timeout = utils.NewJsonDuration(timeout)
 			rpcRequest.EnableModifyRequest = enableModifyReq
-			logs.CtxInfo(ctx, "request info\n%s", utils.ToJson(rpcRequest, true))
-
-		DoNewClient:
-			if cmdConfig != nil && cmdConfig.NewClient != nil {
-				if client, err = cmdConfig.NewClient(ctx, rpcRequest, &idlInfo); err != nil {
+			if !showExample && !listMethods {
+				logs.CtxInfo(ctx, "rpc request: %s", rpcRequest.String())
+			}
+			if config != nil && config.NewClient != nil {
+				if client, err = config.NewClient(ctx, rpcRequest, &idlInfo); err != nil {
 					return err
 				}
 			} else {
@@ -80,15 +75,11 @@ func NewCurlCommand() (*cobra.Command, error) {
 			if err != nil {
 				return fmt.Errorf(`do rpc request find err: %v`, err)
 			}
-			logs.CtxInfo(ctx, "spend %s", utils.ToString(rpcResponse.Spend))
-			for _, header := range rpcResponse.Header {
-				logs.CtxDebug(ctx, "response header %s: %s", header.Key, header.Value)
-			}
+			flag := "success"
 			if rpcResponse.IsError {
-				logs.CtxError(ctx, "response error\n%s", utils.PrettyJsonBytes(rpcResponse.Body))
-			} else {
-				logs.CtxInfo(ctx, "response body\n%s", utils.PrettyJsonBytes(rpcResponse.Body))
+				flag = "error"
 			}
+			logs.CtxInfo(ctx, "rpc response %s: %s", flag, rpcResponse.String())
 			return nil
 		},
 	}

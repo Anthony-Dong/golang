@@ -15,7 +15,7 @@ import (
 	"github.com/anthony-dong/golang/pkg/codec/thrift_codec"
 )
 
-//  echo "AAAAEYIhAQRUZXN0HBwWAhUCAAAA" | bin/gtool codec base64 --decode | bin/gtool codec thrift | jq
+// echo "AAAAEYIhAQRUZXN0HBwWAhUCAAAA" | bin/gtool codec base64 --decode | bin/gtool codec thrift | jq
 func newThriftCodecCmd() (*cobra.Command, error) {
 	messageType := "message"
 	cmd := &cobra.Command{

@@ -15,7 +15,7 @@ fi
 
 
 if [ "$1" == "devtool" ]; then
-  devtool cpp --src times.cpp --src utils.cpp --src main.cpp -v -r -L/usr/local/lib -I/usr/local/include -lspdlog -j8
+  devtool cpp --src times.cpp --src utils.cpp --src main.cpp --output output/main --cxxopt -std=c++17 --cxxopt -I/usr/local/include --linkopt -L/usr/local/lib --linkopt -lspdlog -j8 -r -v
   exit 0
 fi
 

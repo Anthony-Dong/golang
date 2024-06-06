@@ -4,11 +4,9 @@ cc_library(
         "times.cpp",
         "utils.cpp",
     ],
-    hdrs = [
-        "times.h",
-        "utils.h",
-    ],
+    hdrs = glob(include=["*.h"]),
 )
+
 
 cc_binary(
     name = "main",

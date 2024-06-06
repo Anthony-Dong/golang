@@ -14,8 +14,8 @@ import (
 	"github.com/fatih/color"
 )
 
-var logLevel Level = LevelInfo
-var logFlag = LogFlagPrefix | LogFlagColor | LogFlagTime
+var defaultLogLevel Level = LevelInfo
+var defaultLogFlag = LogFlagPrefix | LogFlagColor | LogFlagTime
 var print func(output string) = func(output string) {
 	fmt.Print(output)
 }
@@ -34,7 +34,7 @@ var _levelColor = map[Level]func(format string, a ...interface{}) string{
 }
 
 func SetLevel(level Level) {
-	logLevel = level
+	defaultLogLevel = level
 }
 
 func SetPrinter(printer func(output string)) {
@@ -52,15 +52,15 @@ func SetLevelString(level string) {
 	if !isExist {
 		return
 	}
-	logLevel = ll
+	defaultLogLevel = ll
 }
 
 func SelFlag(flag int) {
-	logFlag = flag
+	defaultLogFlag = flag
 }
 
 func LogLevel() Level {
-	return logLevel
+	return defaultLogLevel
 }
 
 func Flush() {
@@ -103,27 +103,27 @@ func (l Level) String() string {
 }
 
 func IsLevel(level Level) bool {
-	return level >= logLevel
+	return level >= defaultLogLevel
 }
 
 func CtxDebug(ctx context.Context, format string, v ...interface{}) {
-	logf(ctx, LevelDebug, 2, format, v...)
+	logf(ctx, defaultLogFlag, LevelDebug, 2, format, v...)
 }
 
 func CtxInfo(ctx context.Context, format string, v ...interface{}) {
-	logf(ctx, LevelInfo, 2, format, v...)
+	logf(ctx, defaultLogFlag, LevelInfo, 2, format, v...)
 }
 
 func CtxWarn(ctx context.Context, format string, v ...interface{}) {
-	logf(ctx, LevelWarn, 2, format, v...)
+	logf(ctx, defaultLogFlag, LevelWarn, 2, format, v...)
 }
 
 func CtxError(ctx context.Context, format string, v ...interface{}) {
-	logf(ctx, LevelError, 2, format, v...)
+	logf(ctx, defaultLogFlag, LevelError, 2, format, v...)
 }
 
 func Debug(format string, v ...interface{}) {
-	logf(context.Background(), LevelDebug, 2, format, v...)
+	logf(context.Background(), defaultLogFlag, LevelDebug, 2, format, v...)
 }
 
 func IsDebug() bool {
@@ -131,23 +131,23 @@ func IsDebug() bool {
 }
 
 func Info(format string, v ...interface{}) {
-	logf(context.Background(), LevelInfo, 2, format, v...)
+	logf(context.Background(), defaultLogFlag, LevelInfo, 2, format, v...)
 }
 
 func Notice(format string, v ...interface{}) {
-	logf(context.Background(), LevelNotice, 2, format, v...)
+	logf(context.Background(), defaultLogFlag, LevelNotice, 2, format, v...)
 }
 
 func Warn(format string, v ...interface{}) {
-	logf(context.Background(), LevelWarn, 2, format, v...)
+	logf(context.Background(), defaultLogFlag, LevelWarn, 2, format, v...)
 }
 
 func Error(format string, v ...interface{}) {
-	logf(context.Background(), LevelError, 2, format, v...)
+	logf(context.Background(), defaultLogFlag, LevelError, 2, format, v...)
 }
 
-func logf(ctx context.Context, level Level, cl int, format string, v ...interface{}) {
-	if level < logLevel {
+func logf(_ context.Context, flag int, level Level, cl int, format string, v ...interface{}) {
+	if level < defaultLogLevel {
 		return
 	}
 	if print == nil {
@@ -155,7 +155,7 @@ func logf(ctx context.Context, level Level, cl int, format string, v ...interfac
 	}
 	out := strings.Builder{}
 
-	if logFlag&LogFlagPrefix == LogFlagPrefix {
+	if flag&LogFlagPrefix == LogFlagPrefix {
 		switch level {
 		case LevelDebug:
 			out.WriteString("[DEBUG] ")
@@ -171,13 +171,13 @@ func logf(ctx context.Context, level Level, cl int, format string, v ...interfac
 			out.WriteString("[-] ")
 		}
 	}
-	if logFlag&LogFlagTime == LogFlagTime {
+	if flag&LogFlagTime == LogFlagTime {
 		now := time.Now().Format("15:04:05.000")
 		out.WriteString(now)
 		out.WriteString(" ")
 	}
 
-	if logFlag&LogFlagCaller == LogFlagCaller {
+	if flag&LogFlagCaller == LogFlagCaller {
 		_, file, line, ok := runtime.Caller(cl)
 		if !ok {
 			file = "???"
@@ -193,7 +193,7 @@ func logf(ctx context.Context, level Level, cl int, format string, v ...interfac
 	out.WriteString(logData)
 	out.WriteByte('\n')
 	output := out.String()
-	if logFlag&LogFlagColor == LogFlagColor {
+	if flag&LogFlagColor == LogFlagColor {
 		if foo := _levelColor[level]; foo != nil {
 			output = foo(out.String())
 		}

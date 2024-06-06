@@ -52,7 +52,7 @@ func NewTestServiceClientProtocol(t thrift.TTransport, iprot thrift.TProtocol, o
 }
 
 // Parameters:
-//  - Req
+//   - Req
 func (p *TestServiceClient) Test(req *TestRequest) (r *TestResponse, err error) {
 	if err = p.sendTest(req); err != nil {
 		return
@@ -120,7 +120,7 @@ func (p *TestServiceClient) recvTest() (value *TestResponse, err error) {
 }
 
 // Parameters:
-//  - Req
+//   - Req
 func (p *TestServiceClient) TestOneway(req *TestRequest) (err error) {
 	if err = p.sendTestOneway(req); err != nil {
 		return

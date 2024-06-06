@@ -9,7 +9,7 @@ import (
 const AppConfigFile = "devtool.yaml"
 const AppHomeDir = ".devtool"
 
-const AppVersion = "v0.0.3"
+const AppVersion = "v0.0.5"
 const AppName = "devtool"
 
 func GetAppHomeDir() string {

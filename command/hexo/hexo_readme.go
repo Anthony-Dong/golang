@@ -3,7 +3,6 @@ package hexo
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -113,14 +112,9 @@ func (m *markdownCommand) init() error {
 }
 
 func (m *markdownCommand) getParser() (*template.Template, error) {
-	templateFile, err := os.Open(m.TemplateFile)
+	templateBody, err := os.ReadFile(m.TemplateFile)
 	if err != nil {
-		logs.Error("open %s file err: %v", m.TemplateFile, err)
-		return nil, err
-	}
-	templateBody, err := ioutil.ReadAll(templateFile)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read %s file find err: %v", m.TemplateFile, err)
 	}
 	temp := template.New("readme")
 	parse, err := temp.Parse(string(templateBody))

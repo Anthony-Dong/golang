@@ -1,6 +1,7 @@
 package codec
 
 import (
+	"encoding/base64"
 	"strconv"
 	"strings"
 	"testing"
@@ -96,17 +97,21 @@ func Test_isByte(t *testing.T) {
 }
 
 func TestReadFile(t *testing.T) {
-	//dir, err := os.UserHomeDir()
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-	//file, err := ioutil.ReadFile(dir + `/data/test_pb.log`)
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-	//result, err := NewHexDumpCodec().Decode(file)
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-	//t.Log(string(NewHexDumpCodec().Encode(result)))
+	dst, err := NewHexDumpCodec().Decode([]byte(`00000000  00 00 00 cc 10 00 00 00  00 00 00 00 00 01 00 00  |................|
+00000010  00 00 00 00 00 ba 80 01  00 02 00 00 00 0c 70 72  |..............pr|
+00000020  65 64 69 63 74 5f 6c 69  74 65 00 00 00 00 0c 00  |edict_lite......|
+00000030  00 0f 00 01 0c 00 00 00  01 0a 00 01 00 06 5f 27  |.............._'|
+00000040  be 98 10 32 0d 00 03 0b  13 00 00 00 02 00 00 00  |...2............|
+00000050  09 61 64 73 5f 62 72 61  69 6e 3f 80 00 00 00 00  |.ads_brain?.....|
+00000060  00 11 61 64 73 5f 62 72  61 69 6e 3a 61 64 5f 73  |..ads_brain:ad_s|
+00000070  74 6f 70 3f 80 00 00 0d  00 04 0b 04 00 00 00 02  |top?............|
+00000080  00 00 00 09 61 64 73 5f  62 72 61 69 6e 3f f0 00  |....ads_brain?..|
+00000090  00 00 00 00 00 00 00 00  11 61 64 73 5f 62 72 61  |.........ads_bra|
+000000a0  69 6e 3a 61 64 5f 73 74  6f 70 3f f0 00 00 00 00  |in:ad_stop?.....|
+000000b0  00 00 00 0c 00 ff 0b 00  01 00 00 00 00 08 00 02  |................|
+000000c0  00 00 00 00 0d 00 03 0b  0b 00 00 00 00 00 00 00  |................|`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(base64.StdEncoding.EncodeToString(dst))
 }

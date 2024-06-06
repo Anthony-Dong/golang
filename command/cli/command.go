@@ -3,9 +3,6 @@ package cli
 import (
 	"context"
 
-	"github.com/anthony-dong/golang/command/proxy"
-	"github.com/anthony-dong/golang/command/tcp"
-
 	"github.com/spf13/cobra"
 
 	"github.com/anthony-dong/golang/command"
@@ -18,7 +15,9 @@ import (
 	"github.com/anthony-dong/golang/command/hexo"
 	"github.com/anthony-dong/golang/command/jsontool"
 	"github.com/anthony-dong/golang/command/middleware"
+	"github.com/anthony-dong/golang/command/proxy"
 	"github.com/anthony-dong/golang/command/run"
+	"github.com/anthony-dong/golang/command/tcp"
 	"github.com/anthony-dong/golang/command/tcpdump"
 	"github.com/anthony-dong/golang/command/upload"
 )
@@ -33,6 +32,11 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 	if config.AppVersion == "" {
 		config.AppVersion = command.AppVersion
 	}
+	var (
+		verbose    bool
+		logLevel   string
+		configFile string
+	)
 	var cmd = &cobra.Command{
 		Use:                   config.AppName,
 		Version:               config.AppVersion,
@@ -45,31 +49,30 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 			if ctx == nil {
 				ctx = context.Background()
 			}
-			if err := middleware.NewInitLoggerMv(config)(cmd, args); err != nil {
+			if err := middleware.NewInitLoggerMv(verbose, logLevel)(cmd, args); err != nil {
 				return err
 			}
-			if err := middleware.NewInitConfigMv(config)(cmd, args); err != nil {
+			if err := middleware.NewInitConfigMv(configFile, config)(cmd, args); err != nil {
 				return err
 			}
-			cmd.SetContext(context.WithValue(ctx, command.AppConfigCtxKey, config))
 			return nil
 		},
 	}
 	cmd.SetHelpTemplate(command.HelpTmpl)
 	cmd.SetUsageTemplate(command.UsageTmpl)
-	cmd.PersistentFlags().BoolVarP(&config.Verbose, "verbose", "v", false, "Turn on verbose mode")
-	cmd.PersistentFlags().StringVar(&config.ConfigFile, "config-file", config.ConfigFile, "Set the config file")
-	cmd.PersistentFlags().StringVar(&config.LogLevel, "log-level", "", "Set the log level in [debug|info|notice|warn|error] (default \"info\")")
+	cmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Turn on verbose mode")
+	cmd.PersistentFlags().StringVar(&configFile, "config-file", "", "Set the config file")
+	cmd.PersistentFlags().StringVar(&logLevel, "log-level", "", `Set the log level in [debug|info|notice|warn|error] (default "info")`)
 	if err := command.AddCommand(cmd, codec.NewCommand); err != nil {
 		return nil, err
 	}
 	if err := command.AddCommand(cmd, jsontool.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := command.AddCommand(cmd, hexo.NewCommand); err != nil {
+	if err := command.AddCommandWithConfig(cmd, config.HexoConfig, hexo.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := command.AddCommand(cmd, upload.NewCommand); err != nil {
+	if err := command.AddCommandWithConfig(cmd, config.UploadConfig, upload.NewCommand); err != nil {
 		return nil, err
 	}
 	if err := command.AddCommand(cmd, gen.NewCommand); err != nil {
@@ -78,13 +81,13 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 	if err := command.AddCommand(cmd, tcpdump.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := command.AddCommand(cmd, run.NewCommand); err != nil {
+	if err := command.AddCommandWithConfig(cmd, config.RunTaskConfig, run.NewCommand); err != nil {
 		return nil, err
 	}
 	if err := command.AddCommand(cmd, golang.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := command.AddCommand(cmd, curl.NewCurlCommand); err != nil {
+	if err := command.AddCommandWithConfig(cmd, config.CurlConfig, curl.NewCurlCommand); err != nil {
 		return nil, err
 	}
 	if err := command.AddCommand(cmd, git.NewCommand); err != nil {
