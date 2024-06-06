@@ -160,9 +160,6 @@ func (f *FsHandler) HandleDirectory(dir string, w http.ResponseWriter) error {
 	}); err != nil {
 		return err
 	}
-	w.Header().Set("Expires", "0")
-	w.Header().Set("Pragma", "no-cache")
-	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, post-check=0, pre-check=0")
 	w.Header().Set(contentTypeHeader, "text/html; charset=utf-8")
 	_, _ = w.Write(buffer.Bytes())
 	return nil

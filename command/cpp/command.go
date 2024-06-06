@@ -2,81 +2,66 @@ package cpp
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/spf13/cobra"
 
-	"github.com/anthony-dong/golang/pkg/logs"
 	"github.com/anthony-dong/golang/pkg/utils"
 )
 
 func NewCommand() (*cobra.Command, error) {
 	tools := Tools{
-		Dir:         utils.GetPwd(),
-		CXX:         CXX(),
-		CC:          CC(),
-		CompileType: CompileTypeDebug,
+		Pwd: utils.GetPwd(),
+		CC:  CC(),
+		CXX: CXX(),
 	}
+	configFile := ""
 	isRun := false
-	isRelease := false
 	linkType := "binary"
-	output := ""
 	thread := 1
 	cmd := &cobra.Command{
-		Use:   "cpp [--src .cpp] [--hdr .h] [-o binary] [--type binary] [--thread number] [-r] [flags] -- [build flags ... ]",
+		Use:   "cpp [--src .cpp] [--hdr .h] [-o binary] [--type binary] [--thread number] [-r] [flags]",
 		Short: "The cpp language tools",
 		Long:  "Supports fast compile and running of a cpp file",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if isRelease {
-				tools.CompileType = CompileTypeRelease
-			}
-			if !utils.ExistDir(filepath.Join(tools.Dir, ToolsOutputDir)) {
-				if err := os.Mkdir(filepath.Join(tools.Dir, ToolsOutputDir), utils.DefaultDirMode); err != nil {
+			ctx := cmd.Context()
+			if configFile != "" {
+				if err := utils.UnmarshalFromFile(configFile, &tools); err != nil {
 					return err
 				}
 			}
-			if output == "" {
-				if linkType == LinkTypeBinary {
-					mainFile := filepath.Base(tools.SRCS[len(tools.SRCS)-1])
-					output = strings.TrimSuffix(mainFile, filepath.Ext(mainFile))
-				} else {
-					return fmt.Errorf(`required output flag`)
-				}
-			}
-			if linkType != LinkTypeLibrary && linkType != LinkTypeBinary {
+			if !utils.Contains([]string{LinkTypeBinary, LinkTypeLibrary}, linkType) {
 				return fmt.Errorf(`not support link type: %s`, linkType)
 			}
-			tools.BuildArgs = args
-			logs.Debug("output: %s, link type: %s, thread number: %d, tools config: %s", output, linkType, thread, utils.ToJson(tools, true))
-			if err := tools.Init(); err != nil {
+			if linkType == LinkTypeLibrary && filepath.Ext(tools.Output) != ".a" {
+				return fmt.Errorf(`if the link type is libary then the output file type must be .a`)
+			}
+			if err := tools.Build(ctx, thread); err != nil {
 				return err
 			}
-			if err := tools.Compile(thread); err != nil {
+			if err := tools.Link(ctx, linkType); err != nil {
 				return err
 			}
-			if err := tools.Link(linkType, output); err != nil {
-				return err
-			}
-			if isRun {
-				return tools.Run(output)
+			if isRun && linkType == LinkTypeBinary {
+				return tools.Run(ctx)
 			}
 			return nil
 		},
 	}
 	cmd.Flags().StringSliceVar(&tools.SRCS, "src", []string{}, "The source files")
 	cmd.Flags().StringSliceVar(&tools.HDRS, "hdr", []string{}, "The source header files")
-	cmd.Flags().StringVar(&linkType, "type", "binary", "The link object type [binary|library]")
-	cmd.Flags().BoolVarP(&isRun, "run", "r", false, "Exec output binary file")
-	cmd.Flags().BoolVar(&isRelease, "release", false, "Set the compile type is release")
-	cmd.Flags().StringVarP(&output, "output", "o", "", "The output file")
+	cmd.Flags().StringVar(&linkType, "link_type", LinkTypeBinary, "The link object type [binary|library]")
+	cmd.Flags().StringVar(&tools.BuildType, "build_type", BuildTypeDebug, "set the build type is release")
+	cmd.Flags().StringVarP(&tools.Output, "output", "o", "", "The output file")
 	cmd.Flags().IntVarP(&thread, "thread", "j", 1, "The number of compiled threads")
-
-	cmd.Flags().StringSliceVarP(&tools.BuildIncludes, "include", "I", []string{}, "Add directory to include search path")
-	cmd.Flags().StringSliceVarP(&tools.LinkIncludes, "link_include", "L", []string{}, "Add directory to library search path")
-	cmd.Flags().StringSliceVarP(&tools.LinkLibraries, "link", "l", []string{}, "Add link library")
+	cmd.Flags().StringSliceVar(&tools.BuildArgs, "cxxopt", []string{}, "The build opt")
+	cmd.Flags().StringSliceVar(&tools.LinkArgs, "linkopt", []string{}, "The Link opt")
+	cmd.Flags().BoolVarP(&isRun, "run", "r", false, "Exec output binary file")
+	cmd.Flags().StringVar(&configFile, "config", "", "set build config")
 	if err := cmd.MarkFlagRequired("src"); err != nil {
+		return nil, err
+	}
+	if err := cmd.MarkFlagRequired("output"); err != nil {
 		return nil, err
 	}
 	return cmd, nil

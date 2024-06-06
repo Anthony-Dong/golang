@@ -76,52 +76,13 @@ To get more help with devtool, check out our guides at https://github.com/anthon
 ## 测试  devtool
 
 ```shell
-~/go/src/github.com/anthony-dong/golang/command/cpp/test bash  build.sh devtool
-[DEBUG] 15:18:37.789 init config success. filename: /home/anthony-dong/.devtool/config.yaml
-[DEBUG] 15:18:37.789 start cmd: devtool, cmd.args: [], os.args: ["devtool","cpp","--src","times.cpp","--src","utils.cpp","--src","main.cpp","-v","-r","-L/usr/local/lib","-I/usr/local/include","-lspdlog","-j8"]
-[DEBUG] 15:18:37.789 output: main, link type: binary, thread number: 8, tools config: {
-    "CXX": "clang++",
-    "CC": "clang",
-    "Dir": "/home/anthony-dong/go/src/github.com/anthony-dong/golang/command/cpp/test",
-    "SRCS": [
-        "times.cpp",
-        "utils.cpp",
-        "main.cpp"
-    ],
-    "BuildIncludes": [
-        "/usr/local/include"
-    ],
-    "LinkIncludes": [
-        "/usr/local/lib"
-    ],
-    "LinkLibraries": [
-        "spdlog"
-    ],
-    "CompileType": "debug"
-}
-[INFO] 15:18:37.789 Compile: clang++ -Wall -std=c++17 -O0 -g -I/usr/local/include -c main.cpp -o output/main.o
-[INFO] 15:18:37.789 Compile: clang++ -Wall -std=c++17 -O0 -g -I/usr/local/include -c utils.cpp -o output/utils.o
-[INFO] 15:18:37.789 Compile: clang++ -Wall -std=c++17 -O0 -g -I/usr/local/include -c times.cpp -o output/times.o
-[INFO] 15:18:43.591 Link: clang++ -o output/main output/times.o output/utils.o output/main.o -L/usr/local/lib -lspdlog
-[INFO] 15:18:44.066 Run: output/main
+~ CXX=/usr/local/opt/llvm@14/bin/clang++ ./build.sh devtool
+[DEBUG] 18:00:24.551 Build: /usr/local/opt/llvm@14/bin/clang++ -std=c++17 -I/usr/local/include -Wall -O0 -g -c main.cpp -o output/main.o
+[DEBUG] 18:00:24.552 Build: /usr/local/opt/llvm@14/bin/clang++ -std=c++17 -I/usr/local/include -Wall -O0 -g -c utils.cpp -o output/utils.o
+[DEBUG] 18:00:24.552 Build: /usr/local/opt/llvm@14/bin/clang++ -std=c++17 -I/usr/local/include -Wall -O0 -g -c times.cpp -o output/times.o
+[DEBUG] 18:00:26.094 Link: /usr/local/opt/llvm@14/bin/clang++ -o output/main output/utils.o output/times.o output/main.o -L/usr/local/lib -lspdlog
+[DEBUG] 18:00:26.342 Run: output/main
 test::times::v1.0.0
 test::utils::v1.0.0
-[2023-12-03 15:18:44.069] [info] hello world
+[DEBUG] 18:00:27.024 process (22260) done
 ```
-
-## 测试 bazel
-
-```shell
-~/go/src/github.com/anthony-dong/golang/command/cpp/test bash  build.sh bazel
-INFO: Analyzed target //:main (36 packages loaded, 162 targets configured).
-INFO: Found 1 target...
-Target //:main up-to-date:
-  bazel-bin/main
-INFO: Elapsed time: 2.973s, Critical Path: 0.41s
-INFO: 8 processes: 4 internal, 4 linux-sandbox.
-INFO: Build completed successfully, 8 total actions
-INFO: Running command line: bazel-bin/main
-test::times::v1.0.0
-test::utils::v1.0.0
-```
-

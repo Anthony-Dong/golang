@@ -7,24 +7,17 @@ import (
 )
 
 type AppConfig struct {
-	Verbose    bool
-	LogLevel   string
-	ConfigFile string
 	AppName    string
 	AppVersion string
-
-	StaticConfig
-	CurlConfig *CurlConfig
-
-	//Middlewares []func(config *AppConfig) Middleware
+	CommandConfig
+	Middlewares []Middleware
 }
 
-type StaticConfig struct {
+type CommandConfig struct {
 	UploadConfig  *UploadConfig  `yaml:"Upload,omitempty"`
 	HexoConfig    *HexoConfig    `yaml:"Hexo,omitempty"`
 	RunTaskConfig *RunTaskConfig `yaml:"RunTask,omitempty"`
-
-	Middlewares []func(config *AppConfig) Middleware `yaml:"-"`
+	CurlConfig    *CurlConfig    `yaml:"Curl,omitempty"`
 }
 
 type RunTaskConfig struct {

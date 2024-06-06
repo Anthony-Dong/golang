@@ -13,6 +13,7 @@ import (
 type builder struct {
 	level Level
 	kvs   []kv
+	flag  int
 }
 
 type kv struct {
@@ -66,6 +67,11 @@ func (b *builder) KV(key string, value interface{}) *builder {
 	return b
 }
 
+func (b *builder) Flag(flag int) *builder {
+	b.flag = flag
+	return b
+}
+
 func (b *builder) Emit(ctx context.Context) {
 	if ctx == nil {
 		ctx = context.Background()
@@ -80,11 +86,13 @@ func (b *builder) Emit(ctx context.Context) {
 		}
 		output.WriteByte(' ')
 	}
-	logf(ctx, b.level, 2, output.String())
+	logf(ctx, b.flag, b.level, 2, output.String())
 }
 
 func Builder() *builder {
-	return &builder{}
+	return &builder{
+		flag: defaultLogFlag,
+	}
 }
 
 func toString(value interface{}) string {

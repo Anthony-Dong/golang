@@ -1,8 +1,11 @@
 package rpc
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/anthony-dong/golang/pkg/utils"
@@ -23,6 +26,43 @@ type Request struct {
 	EnableModifyRequest bool `json:"enable_modify_request,omitempty"`
 }
 
+func (r *Request) String() string {
+	buffer := bytes.Buffer{}
+	buffer.WriteString(strings.ToUpper(r.Protocol))
+	buffer.WriteString(" ")
+	buffer.WriteString(r.Service + "/" + r.RPCMethod)
+	if len(r.Tag) > 0 {
+		query := url.Values{}
+		for _, elem := range r.Tag {
+			query.Add(elem.Key, elem.Value)
+		}
+		buffer.WriteString("?")
+		buffer.WriteString(query.Encode())
+	}
+	buffer.WriteString("\n")
+	for _, elem := range r.Header {
+		buffer.WriteString(elem.Key)
+		buffer.WriteString(": ")
+		buffer.WriteString(elem.Value)
+		buffer.WriteString("\n")
+	}
+	if r.Timeout > 0 {
+		buffer.WriteString("@timeout")
+		buffer.WriteString(": ")
+		buffer.WriteString(r.Timeout.String())
+		buffer.WriteString("\n")
+	}
+	if r.EnableModifyRequest {
+		buffer.WriteString("@modify: true")
+		buffer.WriteString("\n")
+	}
+	buffer.WriteString("\n")
+	if len(r.Body) > 0 {
+		buffer.Write(utils.PrettyJsonBytes(r.Body))
+	}
+	return buffer.String()
+}
+
 func GetValue(kv []*KV, key string) string {
 	for _, elem := range kv {
 		if elem.Key == key {
@@ -37,6 +77,25 @@ type Response struct {
 	IsError bool            `json:"is_error,omitempty"`
 	Spend   time.Duration   `json:"spend,omitempty"`
 	Header  []*KV           `json:"header,omitempty"`
+}
+
+func (r *Response) String() string {
+	buffer := bytes.Buffer{}
+	for _, elem := range r.Header {
+		buffer.WriteString(elem.Key)
+		buffer.WriteString(" ")
+		buffer.WriteString(elem.Value)
+		buffer.WriteString("\n")
+	}
+	if r.Spend > 0 {
+		buffer.WriteString("@spend")
+		buffer.WriteString(": ")
+		buffer.WriteString(r.Spend.String())
+		buffer.WriteString("\n")
+	}
+	buffer.WriteString("\n")
+	buffer.Write(utils.PrettyJsonBytes(r.Body))
+	return buffer.String()
 }
 
 type Method struct {

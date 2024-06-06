@@ -9,6 +9,9 @@ import (
 )
 
 func NewRpcRequest(urlStr string, headers []string, body string) (*Request, error) {
+	if !strings.Contains(urlStr, "://") {
+		urlStr = "thrift://" + urlStr // default is thrift
+	}
 	parsedUrl, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, err
@@ -33,9 +36,6 @@ func NewRpcRequest(urlStr string, headers []string, body string) (*Request, erro
 			}
 			return ret
 		}),
-	}
-	if req.RPCMethod == "" || strings.Contains(req.RPCMethod, "/") {
-		return nil, fmt.Errorf(`invalid rpc method. request url like: thrift://xxx.xxx.xxx/RPCMethod`)
 	}
 	if req.Service == "" {
 		return nil, fmt.Errorf(`invalid rpc service name. request url like`)

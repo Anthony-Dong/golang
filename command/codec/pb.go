@@ -13,7 +13,7 @@ import (
 	"github.com/anthony-dong/golang/pkg/codec/pb_codec/codec"
 )
 
-//  echo "CgVoZWxsbxCIBEIDCIgE" | bin/gtool codec base64 --decode | bin/gtool codec pb | jq
+// echo "CgVoZWxsbxCIBEIDCIgE" | bin/gtool codec base64 --decode | bin/gtool codec pb | jq
 func newPBCodecCmd() (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "pb",

@@ -1,6 +1,7 @@
 package cpp
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -21,41 +22,35 @@ Link: clang++ -o output/fmt output/fmt.a -L/usr/local/lib -lspdlog -lgtest_main 
 Run: output/fmt
 */
 
-const ToolsOutputDir = "output"
-
 type Tools struct {
-	CXX string `json:",omitempty"`
-	CC  string `json:",omitempty"`
-	Dir string `json:",omitempty"`
+	CXX    string `json:"CXX,omitempty" yaml:"CXX,omitempty"`
+	CC     string `json:"CC,omitempty" yaml:"CC,omitempty"`
+	Pwd    string `json:"Pwd,omitempty" yaml:"Pwd,omitempty"`
+	Output string `json:"Output,omitempty" yaml:"Output,omitempty"`
 
-	BuildArgs []string `json:",omitempty"` // 编译命令
-	LinkArgs  []string `json:",omitempty"` // 链接命令
+	BuildArgs []string `json:"BuildArgs,omitempty" yaml:"BuildArgs,omitempty"` // 编译命令
+	LinkArgs  []string `json:"LinkArgs,omitempty" yaml:"LinkArgs,omitempty"`   // 链接命令
 
-	SRCS []string `json:",omitempty"` // 源文件
-	HDRS []string `json:",omitempty"` // 头文件
-
-	BuildIncludes []string `json:",omitempty"`
-	LinkIncludes  []string `json:",omitempty"`
-	LinkLibraries []string `json:",omitempty"`
-
-	CompileType string `json:",omitempty"` // 构建类型
+	SRCS      []string `json:"SRCS,omitempty" yaml:"SRCS,omitempty"`           // 源文件
+	HDRS      []string `json:"HDRS,omitempty" yaml:"HDRS,omitempty"`           // 头文件
+	BuildType string   `json:"BuildType,omitempty" yaml:"BuildType,omitempty"` // 构建类型
 
 	objects []string
 }
 
-const CompileTypeDebug = "debug"
-const CompileTypeRelease = "release"
+const BuildTypeDebug = "debug"
+const BuildTypeRelease = "release"
 const LinkTypeBinary = "binary"
 const LinkTypeLibrary = "library"
 
-func (t *Tools) Compile(thread int) error {
+func (t *Tools) Build(ctx context.Context, thread int) error {
 	wg := errgroup.Group{}
 	wg.SetLimit(thread)
 	lock := sync.Mutex{}
 	for _, _src := range t.SRCS {
 		src := _src
 		wg.Go(func() error {
-			if obj, err := t.compile(src); err != nil {
+			if obj, err := t.build(ctx, src); err != nil {
 				return err
 			} else {
 				lock.Lock()
@@ -68,16 +63,13 @@ func (t *Tools) Compile(thread int) error {
 	return wg.Wait()
 }
 
-func (t *Tools) compile(src string) (string, error) {
+func (t *Tools) build(ctx context.Context, src string) (string, error) {
 	args := t.BuildArgs
 	if !t.hasArgs(args, "-W") {
 		args = append(args, "-Wall")
 	}
-	if !t.hasArgs(args, "-std") {
-		args = append(args, fmt.Sprintf("-std=c++%s", CXX_STANDARD()))
-	}
-	switch t.CompileType {
-	case CompileTypeRelease:
+	switch t.BuildType {
+	case BuildTypeRelease:
 		if t.hasArgs(args, "-O") {
 			logs.Debug("Build: cannot set arg -O2 because you already configured it")
 		} else {
@@ -93,15 +85,12 @@ func (t *Tools) compile(src string) (string, error) {
 			args = append(args, "-g") // Generate source-level debug information
 		}
 	}
-	for _, elem := range t.BuildIncludes {
-		args = append(args, fmt.Sprintf("-I%s", elem))
-	}
 	object := t.NewObjectName(src)
 	args = append(args, "-c", src)
-	args = append(args, "-o", t.NewObjectName(src))
+	args = append(args, "-o", object)
 	command := exec.Command(t.CXX, args...)
-	command.Dir = t.Dir
-	logs.Info("Compile: %s", utils.PrettyCmd(command))
+	command.Dir = t.Pwd
+	logs.CtxDebug(ctx, "Build: %s", utils.PrettyCmd(command))
 	if err := utils.RunCommand(command); err != nil {
 		return "", err
 	}
@@ -110,71 +99,53 @@ func (t *Tools) compile(src string) (string, error) {
 
 func (t *Tools) NewObjectName(filename string) string {
 	filename = filepath.Base(filename)
-	return filepath.Join(ToolsOutputDir, strings.TrimSuffix(filename, filepath.Ext(filename))+".o")
+	outputDir := filepath.Dir(t.Output)
+	return filepath.Join(outputDir, strings.TrimSuffix(filename, filepath.Ext(filename))+".o")
 }
 
-func (t *Tools) Init() error {
-	if t.CXX == "" {
-		return fmt.Errorf(`not found cxx`)
-	}
-	if t.CC == "" {
-		return fmt.Errorf(`not found cc`)
-	}
-	return nil
-}
-
-func (t *Tools) Link(linkType string, file string) error {
-	output := filepath.Join(ToolsOutputDir, file)
+func (t *Tools) Link(ctx context.Context, linkType string) error {
 	switch linkType {
 	case LinkTypeBinary:
-		return t.linkBinary(output)
+		return t.linkBinary(ctx, t.Output)
 	case LinkTypeLibrary:
-		if !strings.HasSuffix(output, ".a") {
-			output = output + ".a"
-		}
-		return t.linkLibrary(output)
+		return t.linkLibrary(ctx, t.Output)
 	}
 	return fmt.Errorf(`not support link type`)
 }
 
-func (t *Tools) linkBinary(output string) error {
+func (t *Tools) linkBinary(ctx context.Context, output string) error {
 	args := []string{"-o", output}
 	for _, object := range t.objects {
 		args = append(args, object)
 	}
-	for _, elem := range t.LinkIncludes {
-		args = append(args, fmt.Sprintf("-L%s", elem))
-	}
-	for _, elem := range t.LinkLibraries {
-		args = append(args, fmt.Sprintf("-l%s", elem))
-	}
+	args = append(args, t.LinkArgs...)
 	command := exec.Command(t.CXX, args...)
-	command.Dir = t.Dir
-	logs.Info("Link: %s", utils.PrettyCmd(command))
+	command.Dir = t.Pwd
+	logs.CtxDebug(ctx, "Link: %s", utils.PrettyCmd(command))
 	return utils.RunCommand(command)
 }
 
-func (t *Tools) linkLibrary(output string) error {
+func (t *Tools) linkLibrary(ctx context.Context, output string) error {
 	// https://blog.csdn.net/xuhongning/article/details/6365200
 	args := []string{"-r", "-c"}
 	if logs.IsDebug() {
 		args = append(args, "-v")
 	}
+	args = append(args, t.LinkArgs...)
 	args = append(args, output)
 	for _, object := range t.objects {
 		args = append(args, object)
 	}
 	command := exec.Command("ar", args...)
-	command.Dir = t.Dir
-	logs.Info("Link: %s", utils.PrettyCmd(command))
+	command.Dir = t.Pwd
+	logs.CtxDebug(ctx, "Link: %s", utils.PrettyCmd(command))
 	return utils.RunCommand(command)
 }
 
-func (t *Tools) Run(binaryName string) error {
-	binaryFile := filepath.Join(ToolsOutputDir, binaryName)
-	runCmd := exec.Command(binaryFile)
-	runCmd.Dir = t.Dir
-	logs.Info("Run: %s", utils.PrettyCmd(runCmd))
+func (t *Tools) Run(ctx context.Context) error {
+	runCmd := exec.Command(t.Output)
+	runCmd.Dir = t.Pwd
+	logs.CtxDebug(ctx, "Run: %s", utils.PrettyCmd(runCmd))
 	return utils.RunCommand(runCmd)
 }
 
@@ -199,11 +170,4 @@ func CC() string {
 		return cc
 	}
 	return "clang"
-}
-
-func CXX_STANDARD() string {
-	if cc := os.Getenv("CXX_STANDARD"); cc != "" {
-		return ""
-	}
-	return "17"
 }

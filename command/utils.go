@@ -1,7 +1,6 @@
 package command
 
 import (
-	"context"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -14,6 +13,15 @@ func ExitError(err error) {
 		logs.Error("[%s] exit error: %s", AppName, err.Error())
 	}
 	os.Exit(1)
+}
+
+func AddCommandWithConfig[T any](cmd *cobra.Command, config *T, foo func(config *T) (*cobra.Command, error)) error {
+	subCmd, err := foo(config)
+	if err != nil {
+		return err
+	}
+	cmd.AddCommand(subCmd)
+	return nil
 }
 
 func AddCommand(cmd *cobra.Command, foo func() (*cobra.Command, error)) error {
@@ -54,20 +62,3 @@ Use "{{.CommandPath}} COMMAND --help" for more information about a command.{{end
 To get more help with devtool, check out our guides at https://github.com/anthony-dong/golang
 `
 )
-
-const AppConfigCtxKey = "AppConfigCtxKey"
-
-func GetAppConfig(ctx context.Context) AppConfig {
-	if ctx == nil {
-		return AppConfig{}
-	}
-	value, _ := ctx.Value(AppConfigCtxKey).(*AppConfig)
-	if value == nil {
-		return AppConfig{}
-	}
-	return *value
-}
-
-func GetCAppConfig(cmd *cobra.Command) AppConfig {
-	return GetAppConfig(cmd.Context())
-}

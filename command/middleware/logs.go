@@ -9,15 +9,15 @@ import (
 	"github.com/anthony-dong/golang/pkg/logs"
 )
 
-func NewInitLoggerMv(config *command.AppConfig) command.Middleware {
+func NewInitLoggerMv(verbose bool, logLevel string) command.Middleware {
 	return func(ctx *cobra.Command, args []string) error {
 		if strings.HasPrefix(ctx.Use, "curl") {
 			logs.SetPrinterStdError()
 		}
-		if config.LogLevel != "" {
-			logs.SetLevelString(config.LogLevel)
+		if logLevel != "" {
+			logs.SetLevelString(logLevel)
 		}
-		if config.Verbose {
+		if verbose {
 			logs.SetLevel(logs.LevelDebug)
 		}
 		return nil

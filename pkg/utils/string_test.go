@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -151,4 +153,29 @@ func TestRegexp(t *testing.T) {
 
 func TestUniqueString(t *testing.T) {
 	assert.Equal(t, UniqueString([]string{"k3", "k1", "k2", "k3", "k4"}), []string{"k3", "k1", "k2", "k4"})
+}
+
+func TestYamlUnmarshal(t *testing.T) {
+	type Data struct {
+		K1 string `yaml:"K1"`
+		K2 string `yaml:"K2"`
+	}
+	type Test struct {
+		Data1 string `yaml:"Data1"`
+		Data2 Data   `yaml:"Data2"`
+	}
+	test := Test{
+		Data1: "1",
+		Data2: Data{
+			K1: "1111",
+			K2: "2222",
+		},
+	}
+	if err := yaml.Unmarshal([]byte(`
+Data1: 222
+Data2:
+  K2: 3333`), &test); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%#v", test)
 }
