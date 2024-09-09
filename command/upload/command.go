@@ -25,7 +25,7 @@ type uploadCommand struct {
 	DstFile        string `json:"dst_file,omitempty"`
 }
 
-func NewCommand(config *command.UploadConfig) (*cobra.Command, error) {
+func NewCommand(config func() *command.UploadConfig) (*cobra.Command, error) {
 	cmd := &cobra.Command{Use: "upload", Short: `File upload tool`}
 	var (
 		cfg = &uploadCommand{}
@@ -58,10 +58,11 @@ func (c *uploadCommand) validate() error {
 	logs.Info("[upload] config:\n%s", utils.ToJson(c, true))
 	return nil
 }
-func (c *uploadCommand) Run(ctx context.Context, config *command.UploadConfig) error {
+func (c *uploadCommand) Run(ctx context.Context, configProvider func() *command.UploadConfig) error {
 	if err := c.validate(); err != nil {
 		return err
 	}
+	config := configProvider()
 	if config == nil || len(config.Bucket) == 0 {
 		return errors.Errorf("not found bucket config, bucket: %s", c.OssConfigType)
 	}

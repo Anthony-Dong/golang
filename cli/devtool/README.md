@@ -20,7 +20,6 @@ Commands:
   json        The Json tool
   proxy       Proxy and Capture thrift/http/https requests
   run         Run task templates
-  tcpdump     Decode tcpdump file & stream
   upload      File upload tool
 
 Options:
@@ -40,32 +39,11 @@ To get more help with devtool, check out our guides at https://github.com/anthon
 1. `go install`  下载
 
 ```shell
-CGO_ENABLED=1 go install -v github.com/anthony-dong/golang/cli/devtool@latest
+# 注意Go版本大于等于1.18
+go install -v github.com/anthony-dong/golang/cli/devtool@latest
 ```
 
 2. release 下载 https://github.com/anthony-dong/golang/releases
-3. 源码下载
-
-```shell
-# 1. 下载源码
-git clone --depth 1 https://github.com/anthony-dong/golang.git
-
-# 2. 安装
-cd golang && make install
-```
-
-4. 如果运行/编译报如下错误
-
-```shell
-github.com/google/gopacket/pcap
-# github.com/google/gopacket/pcap
-pkg/mod/github.com/google/gopacket@v1.1.19/pcap/pcap_unix.go:34:10: fatal error: pcap.h: No such file or directory
- #include <pcap.h>
-          ^~~~~~~~
-compilation terminated.
-```
-
-- linux(Debian) 环境可以执行, mac应该默认就自带了pcap
 
 ```shell
 # 1. update

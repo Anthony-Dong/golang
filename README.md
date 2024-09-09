@@ -40,7 +40,7 @@ go get -v github.com/anthony-dong/golang
 
 # [devtool](cli/devtool)
 
-如何下载:  `CGO_ENABLED=1 go install -v github.com/anthony-dong/golang/cli/devtool@latest`  或者参考[此文档](cli/devtool)
+如何下载:  `go install -v github.com/anthony-dong/golang/cli/devtool@latest`  或者参考[此文档](cli/devtool)
 
 ```shell
 ➜  devtool git:(master) devtool --help
@@ -70,3 +70,47 @@ Use "devtool COMMAND --help" for more information about a command.
 To get more help with devtool, check out our guides at https://github.com/anthony-dong/golang
 ```
 
+# [tcpdump_tools](cli/tcpdump_tools)
+
+1. 安装
+
+```shell
+CGO_ENABLED=1 go install -v github.com/anthony-dong/golang/cli/tcpdump_tools@latest
+```
+
+2. 使用
+
+```shell
+~ tcpdump_tools -h
+decode tcpdump file, help doc: https://github.com/anthony-dong/golang/tree/master/cli/tcpdump_tools
+
+Usage:
+  tcpdump_tools [-r file] [-v] [-X] [--max dump size] [flags]
+
+Examples:
+  tcpdump 'port 8080' -X -l -n | tcpdump_tools
+
+Flags:
+  -X, --dump          Enable Display payload details with hexdump.
+  -r, --file string   The packets file, eg: tcpdump_xxx_file.pcap.
+  -h, --help          help for tcpdump_tools
+      --max int       The hexdump max size
+  -v, --verbose       Enable Display decoded details.
+```
+
+protoc-gen-console
+
+> 将protoc输出到文件中
+
+1. 安装
+
+```shell
+go install -v github.com/anthony-dong/golang/cli/protoc-gen-console@latest
+```
+
+2. 使用
+
+```shell
+protoc -I . --plugin=protoc-gen-console=${HOME}/go/bin/protoc-gen-console --console_opt=output=output/out.
+json  --console_opt=disable_source_code=1  --console_opt=params1=1,params2=2  --console_out=. pkg/idl/test/text.proto
+```

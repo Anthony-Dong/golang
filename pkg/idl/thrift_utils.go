@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/cloudwego/kitex/pkg/generic/descriptor"
+
+	"github.com/anthony-dong/golang/pkg/idl/internal"
+
 	"github.com/cloudwego/thriftgo/parser"
 
 	"github.com/cloudwego/kitex/pkg/generic"
@@ -42,4 +46,8 @@ func loadThriftDescriptorProvider(main string, idls map[string]string) (provider
 		return nil, fmt.Errorf("parse thrift idl find err: %v", err)
 	}
 	return provider, nil
+}
+
+func ParseThriftType(tree *parser.Thrift, t *parser.Type) (*descriptor.TypeDescriptor, error) {
+	return internal.ParseThriftType(tree, t)
 }

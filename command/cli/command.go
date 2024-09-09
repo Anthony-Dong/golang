@@ -3,6 +3,12 @@ package cli
 import (
 	"context"
 
+	"github.com/anthony-dong/golang/command/_init"
+	"github.com/anthony-dong/golang/command/install"
+	"github.com/anthony-dong/golang/command/mock"
+
+	"github.com/anthony-dong/golang/command/tools"
+
 	"github.com/spf13/cobra"
 
 	"github.com/anthony-dong/golang/command"
@@ -18,7 +24,6 @@ import (
 	"github.com/anthony-dong/golang/command/proxy"
 	"github.com/anthony-dong/golang/command/run"
 	"github.com/anthony-dong/golang/command/tcp"
-	"github.com/anthony-dong/golang/command/tcpdump"
 	"github.com/anthony-dong/golang/command/upload"
 )
 
@@ -69,25 +74,28 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 	if err := command.AddCommand(cmd, jsontool.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := command.AddCommandWithConfig(cmd, config.HexoConfig, hexo.NewCommand); err != nil {
+	if err := command.AddCommandWithConfig(cmd, func() *command.HexoConfig { return config.HexoConfig }, hexo.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := command.AddCommandWithConfig(cmd, config.UploadConfig, upload.NewCommand); err != nil {
+	if err := command.AddCommandWithConfig(cmd, func() *command.UploadConfig {
+		return config.UploadConfig
+	}, upload.NewCommand); err != nil {
 		return nil, err
 	}
 	if err := command.AddCommand(cmd, gen.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := command.AddCommand(cmd, tcpdump.NewCommand); err != nil {
-		return nil, err
-	}
-	if err := command.AddCommandWithConfig(cmd, config.RunTaskConfig, run.NewCommand); err != nil {
+	if err := command.AddCommandWithConfig(cmd, func() *command.RunTaskConfig {
+		return config.RunTaskConfig
+	}, run.NewCommand); err != nil {
 		return nil, err
 	}
 	if err := command.AddCommand(cmd, golang.NewCommand); err != nil {
 		return nil, err
 	}
-	if err := command.AddCommandWithConfig(cmd, config.CurlConfig, curl.NewCurlCommand); err != nil {
+	if err := command.AddCommandWithConfig(cmd, func() *command.CurlConfig {
+		return config.CurlConfig
+	}, curl.NewCurlCommand); err != nil {
 		return nil, err
 	}
 	if err := command.AddCommand(cmd, git.NewCommand); err != nil {
@@ -100,6 +108,18 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 		return nil, err
 	}
 	if err := command.AddCommand(cmd, tcp.NewCommand); err != nil {
+		return nil, err
+	}
+	if err := command.AddCommand(cmd, tools.NewCommand); err != nil {
+		return nil, err
+	}
+	if err := command.AddCommand(cmd, _init.NewCommand); err != nil {
+		return nil, err
+	}
+	if err := command.AddCommand(cmd, mock.NewCommand); err != nil {
+		return nil, err
+	}
+	if err := command.AddCommand(cmd, install.NewCommand); err != nil {
 		return nil, err
 	}
 	return cmd, nil

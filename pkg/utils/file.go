@@ -45,6 +45,22 @@ func ExistFile(filename string) bool {
 	return err == nil || os.IsExist(err)
 }
 
+func CreateFile(filename string) error {
+	if ExistFile(filename) {
+		return nil
+	}
+	if !ExistDir(filepath.Dir(filename)) {
+		if err := os.MkdirAll(filepath.Dir(filename), DefaultDirMode); err != nil {
+			return err
+		}
+	}
+	file, err := os.OpenFile(filename, os.O_CREATE, DefaultFileMode)
+	if err != nil {
+		return err
+	}
+	return file.Close()
+}
+
 // Exist 判断文件是否存在.
 func ExistDir(filename string) bool {
 	stat, err := os.Stat(filename)

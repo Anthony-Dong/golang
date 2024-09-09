@@ -25,6 +25,9 @@ func NewCommand() (*cobra.Command, error) {
 	if err := command.AddCommand(cmd, newPBCodecCmd); err != nil {
 		return nil, err
 	}
+	if err := command.AddCommand(cmd, NewProtocCodec); err != nil {
+		return nil, err
+	}
 	cmd.AddCommand(newCodecCmd("gzip", codec.NewGzipCodec()))
 	cmd.AddCommand(newCodecCmd("base64", codec.NewCodec(codec.NewBase64Codec())))
 	cmd.AddCommand(newCodecCmd("br", codec.NewBrCodec()))

@@ -1,32 +1,33 @@
 {
-    "configurations": [
-        {
-            "name": "example_vscode",
-            "type": "go",
-            "request": "launch",
-            "mode": "debug",
-            "program": "example/vscode/main.go",
-            "args": [
-                "-dir", ".", "-keywords", "Ynl0ZWQub3Jn;Ynl0ZWRhbmNlLm5ldA==;Ynl0ZWRhbmNlLm9yZw==;ZmVpc2h1LmNu"
-            ],
-            "cwd": ".",
-            "env": {
-                "K1": "V1",
-            }
-        },
-        {
-            "name": "example_vscode_test",
-            "type": "go",
-            "request": "launch",
-            "mode": "test",
-            "program": "example/vscode",
-            "args": [
-                "-test.run=Test_main"
-            ],
-            "cwd": ".",
-            "env": {
-                "K1": "V1",
-            }
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "example_env",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/example/env",
+      "args": [
+        ""
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "K1": "V1"
+      }
+    },
+    {
+      "name": "example_vscode_test",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}/example/vscode",
+      "args": [
+        "-test.run=Test_main"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "K1": "V1"
+      }
+    }
+  ]
 }

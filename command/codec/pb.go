@@ -2,7 +2,7 @@ package codec
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/anthony-dong/golang/pkg/utils"
@@ -22,7 +22,7 @@ func newPBCodecCmd() (*cobra.Command, error) {
 			if !utils.CheckStdInFromPiped() {
 				return cmd.Help()
 			}
-			in, err := ioutil.ReadAll(os.Stdin)
+			in, err := io.ReadAll(os.Stdin)
 			if err != nil {
 				return fmt.Errorf(`read std.in find err: %v`, err)
 			}

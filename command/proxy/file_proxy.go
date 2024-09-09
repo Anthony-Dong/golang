@@ -14,7 +14,7 @@ func NewFileSystemCommand() (*cobra.Command, error) {
 	listenAddr := ""
 	fileSystemDir := ""
 	cmd := &cobra.Command{
-		Use:   "file",
+		Use:   "fs",
 		Short: "FileSystem Proxy tool",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -22,12 +22,14 @@ func NewFileSystemCommand() (*cobra.Command, error) {
 			if err != nil {
 				return err
 			}
-			ip, err := utils.GetIP(true)
+			ipAddrs, err := utils.GetAllIP(true)
 			if err != nil {
 				return err
 			}
 			logs.CtxInfo(ctx, "FileSystem dir: %v", fileSystemDir)
-			logs.CtxInfo(ctx, "FileSystem listen addr: http://%v:%v", ip, port)
+			for _, elem := range ipAddrs {
+				logs.CtxInfo(ctx, "FileSystem listen addr: http://%v:%v", elem, port)
+			}
 			return http.ListenAndServe(listenAddr, proxy.NewFsHandler(fileSystemDir))
 		},
 	}
