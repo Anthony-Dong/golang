@@ -6,17 +6,21 @@ AppName := devtool
 .PHONY: build
 build:
 	./build.sh build $(AppName)
+	./build.sh build protoc-gen-console
+	./build.sh build print-env
+	CGO_ENABLED=1 IS_SUBMOD=1 ./build.sh build tcpdump_tools
 
 .PHONY: cors
 cors:
 	./build.sh cors $(AppName)
+	./build.sh cors protoc-gen-console
 
 .PHONY: install
 install:
 	./build.sh install $(AppName)
 	./build.sh install protoc-gen-console
 	./build.sh install print-env
-	CGO_ENABLED=1 IS_SUBMOD=1 bash ./build.sh install tcpdump_tools
+	CGO_ENABLED=1 IS_SUBMOD=1 ./build.sh install tcpdump_tools
 
 .PHONY: lint
 lint:
