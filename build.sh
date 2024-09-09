@@ -2,36 +2,43 @@
 
 set -e
 
+export GO111MODULE=on
 
+build_flag=("-v" "-ldflags" "-s -w")
+
+# cross_go_build windows amd64
 function cross_go_build(){
-  # CGO_ENABLED=0 GOOS=windows GOARCH=amd64
-  # CGO_ENABLED=0 GOOS=darwin GOARCH=amd64
-  # CGO_ENABLED=0 GOOS=darwin GOARCH=arm
-  # CGO_ENABLED=0 GOOS=linux GOARCH=amd64
   binary="$3"
   if [ "$1" == "windows" ]; then
     binary="$3.exe"
   fi
-  GO111MODULE=on CGO_ENABLED=1 GOOS=$1 GOARCH=$2  go build -v -ldflags "-s -w" -o "bin/$1_$2/$binary" "cli/$3/main.go"
+  CGO_ENABLED=0 GOOS=$1 GOARCH=$2 go build "${build_flag[@]}" -o "bin/$1_$2/$binary" "cli/$3/main.go"
 }
 
-
+# go_build xxx
 function go_build(){
   binary="$1"
-  GO111MODULE=on CGO_ENABLED=1 go build -v -ldflags "-s -w" -o "bin/$binary" "cli/$1/main.go"
+  if [ "$IS_SUBMOD" = "1" ]; then
+    cd "cli/$1" && go build "${build_flag[@]}" -o "../../bin/$binary" "main.go" && cd -
+  else
+    go build "${build_flag[@]}" -o "bin/$binary" "cli/$1/main.go"
+  fi
 }
-
 
 function go_install(){
   binary="$1"
-  GO111MODULE=on CGO_ENABLED=1 go build -v -ldflags "-s -w" -o "$(go env GOPATH)/bin/$binary" "cli/$1/main.go"
+  output="$(go env GOPATH)/bin/$binary"
+  if [ "$IS_SUBMOD" = "1" ]; then
+    cd "cli/$1" && go build "${build_flag[@]}" -o "$output" "main.go" && cd -
+  else
+    go build "${build_flag[@]}" -o "$output" "cli/$1/main.go"
+  fi
 }
 
 function format_golang_file () {
   project_dir=$(realpath "$1")
 	# shellcheck disable=SC2044
 	for elem in $(find "${project_dir}" -name '*.go' | grep -v 'example/'); do
-#	  echo "format ${elem}"
 		gofmt -w "${elem}" 2>&1;
 		goimports -w -srcdir "${project_dir}" -local "$2" "${elem}" 2>&1;
 	done
@@ -39,10 +46,16 @@ function format_golang_file () {
 
 case $1 in
 build)
-  go_build $2
+  go_build "$2"
   ;;
 install)
-  go_install $2
+  go_install "$2"
+  ;;
+cors)
+  cross_go_build windows amd64 "$2"
+  cross_go_build darwin amd64 "$2"
+  cross_go_build linux amd64 "$2"
+  cross_go_build darwin arm64 "$2"
   ;;
 format)
   format_golang_file . "github.com/anthony-dong/golang"

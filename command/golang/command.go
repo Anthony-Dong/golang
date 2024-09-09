@@ -24,6 +24,12 @@ func NewCommand() (*cobra.Command, error) {
 	if err := command.AddCommand(cmd, NewGoTestCommand); err != nil {
 		return nil, err
 	}
+	if err := command.AddCommand(cmd, NewListGoModSize); err != nil {
+		return nil, err
+	}
+	if err := command.AddCommand(cmd, NewGoEnvCommand); err != nil {
+		return nil, err
+	}
 	return cmd, nil
 }
 

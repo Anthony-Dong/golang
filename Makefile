@@ -5,12 +5,22 @@ AppName := devtool
 
 .PHONY: build
 build:
-	bash build.sh build $(AppName)
+	./build.sh build $(AppName)
+	./build.sh build protoc-gen-console
+	./build.sh build print-env
+	CGO_ENABLED=1 IS_SUBMOD=1 ./build.sh build tcpdump_tools
+
+.PHONY: cors
+cors:
+	./build.sh cors $(AppName)
+	./build.sh cors protoc-gen-console
 
 .PHONY: install
 install:
-	bash build.sh install $(AppName)
-	$$(go env GOPATH)/bin/$(AppName) --version
+	./build.sh install $(AppName)
+	./build.sh install protoc-gen-console
+	./build.sh install print-env
+	CGO_ENABLED=1 IS_SUBMOD=1 ./build.sh install tcpdump_tools
 
 .PHONY: lint
 lint:
@@ -22,9 +32,7 @@ check:
 
 .PHONY: test
 test: ## go tool cover -html=cover.out
-	CGO_ENABLED=1 go test -coverprofile cover.out -count=1 ./pkg/...
-	make -C command/tcpdump/test un_compress
-	CGO_ENABLED=1 go test -coverprofile cover.out -count=1 ./command/...
+	go test -coverprofile cover.out -count=1 ./pkg/...
 
 .PHONY: help
 help: ## help

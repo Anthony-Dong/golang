@@ -60,7 +60,7 @@ func (r *RepoInfo) CloneUrl() string {
 }
 
 func (r *RepoInfo) CloneDir(home string) string {
-	return filepath.Join(home, r.Namespace, r.Path)
+	return filepath.Join(home, strings.ToLower(r.Namespace), strings.ToLower(filepath.Dir(r.Path)), filepath.Base(r.Path))
 }
 
 func getRepoInfo(url string) (*RepoInfo, error) {

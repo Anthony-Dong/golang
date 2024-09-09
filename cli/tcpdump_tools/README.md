@@ -1,31 +1,46 @@
-# tcpdump
+[# tcpdump
 
 # 背景
 
-很多时候应用程序是无法暴露异常的, 比如HTTP框架会有一些黑盒行为(404等), 或者你业务中没有记录日志, 想要知道请求响应信息来定位问题！是的tcpdump可以抓取明文报文, 但是阅读很麻烦, 所以这里提供了一个解析tcpdump的工具, 虽然[Wireshark](https://www.wireshark.org/)也可以做, 但是还需要把抓包文件下载到本地, 而且协议支持不一定满足定制化需求...！同时我也提供了Thrift解析, 这主要是因为字节这边服务端主要是Thrift协议较多！
+很多时候应用程序是无法暴露异常的, 比如HTTP框架会有一些黑盒行为(404等), 或者你业务中没有记录日志,
+想要知道请求响应信息来定位问题！是的tcpdump可以抓取明文报文, 但是阅读很麻烦, 所以这里提供了一个解析tcpdump的工具,
+虽然[Wireshark](https://www.wireshark.org/)也可以做, 但是还需要把抓包文件下载到本地,
+而且协议支持不一定满足定制化需求...！同时我也提供了Thrift解析, 这主要是因为字节这边服务端主要是Thrift协议较多！
 
-注意: 
+注意:
 
-1. 解析[Thrift协议](https://github.com/Anthony-Dong/go-sdk/tree/master/commons/codec/thrift_codec)是我自己写的, HTTP使用的[FastHTTP](https://github.com/valyala/fasthttp), L2-L7协议解析是用的[Go-Packet](https://github.com/google/gopacket) ！
-2. Go-[Packet](https://www.tcpdump.org/manpages/pcap.3pcap.html) 需要开启`CGO_ENABLED=1`, 由于交叉编译对于CGO支持并不友好, 所以这里如果你想用, 目前仅仅支持[release](https://github.com/Anthony-Dong/go-sdk/releases)中下载 linux & macos 版本, 其他环境可以参考 [如何下载devtool-cli](../)! 
-3. 注意Linux环境需要安装 `libpcap`, 例如我是Debian, 可以执行 `sudo apt-get install libpcap-dev`, 具体可以参考:[pcap.h header file problem](https://stackoverflow.com/questions/5779784/pcap-h-header-file-problem) ! mac 用户不需要！
+1. 解析[Thrift协议](https://github.com/Anthony-Dong/go-sdk/tree/master/commons/codec/thrift_codec)是我自己写的,
+   HTTP使用的[FastHTTP](https://github.com/valyala/fasthttp),
+   L2-L7协议解析是用的[Go-Packet](https://github.com/google/gopacket) ！
+2. Go-[Packet](https://www.tcpdump.org/manpages/pcap.3pcap.html) 需要开启`CGO_ENABLED=1`
+
+```shell
+# linux(debian): sudo apt-get install -y libpcap-dev
+CGO_ENABLED=1 go install -v github.com/anthony-dong/golang/cli/tcpdump_tools@latest
+```
+
+3. 注意Linux环境需要安装 `libpcap`, 例如我是Debian, 可以执行 `sudo apt-get install libpcap-dev`,
+   具体可以参考:[pcap.h header file problem](https://stackoverflow.com/questions/5779784/pcap-h-header-file-problem) !
+   mac 用户不需要！
+
 4. 解析失败会默认 hexdump 数据包
 
 # 特性
 
 - 支持解析TCP的包
 - 支持解析HTTP包(HTTP/1.1 & HTTP/1.0)，支持自动根据`content-encoding`类型进行解析！
-- 支持解析Thrift包，支持多种协议，包含[Kitex](https://github.com/cloudwego/kitex)的TTHeader 和 [Thrift](https://github.com/apache/thrift/tree/master/doc/specs) 官方协议（Framed、THeader、Unframed）！
+- 支持解析Thrift包，支持多种协议，包含[Kitex](https://github.com/cloudwego/kitex)的TTHeader
+  和 [Thrift](https://github.com/apache/thrift/tree/master/doc/specs) 官方协议（Framed、THeader、Unframed）！
 - 支持解析大包
 - 支持tcpdump在线/离线流量解析
 
 ```shell
-➜  devtool tcpdump -h
-Name: decode tcpdump file, help doc: https://github.com/Anthony-Dong/go-sdk/tree/master/devtool/tcpdump
+➜  tcpdump_tools -h
+Name: decode tcpdump file, help doc: https://github.com/Anthony-Dong/go-sdk/tree/master/cli/tcpdump_tools
 
-Usage: devtool tcpdump [-r file] [-v] [-X] [--max dump size] [flags]
+Usage: tcpdump_tools [-r file] [-v] [-X] [--max dump size] [flags]
 
-Examples: tcpdump 'port 8080' -X -l -n | devtool tcpdump
+Examples: tcpdump 'port 8080' -X -l -n | devtool tcpdump_tools
 
 Options:
   -X, --dump          Enable Display payload details with hexdump.
@@ -43,25 +58,34 @@ To get more help with devtool, check out our guides at https://github.com/Anthon
 
 # 问题
 
-注意：本人自己写的 tcp 包重组的逻辑，试着用 pcap-reassembly去写，但是发现很多边界问题解决不了，后期如果没啥问题，会直接替换长 pcap的逻辑.
+注意：本人自己写的 tcp 包重组的逻辑，试着用 pcap-reassembly去写，但是发现很多边界问题解决不了，后期如果没啥问题，会直接替换长
+pcap的逻辑.
 
 Q: 由于我们应用层协议已经屏蔽了tcp协议的细节，比如TCP重传，TCP Windows Update，TCP Dup ACK！
 
-A: 这里使用一个tricky的逻辑 (建立的前提需要维护一个 tcp 流的状态, 具体可以见: [RFC793](https://www.rfc-editor.org/rfc/rfc793#section-3.2))   
+A: 这里使用一个tricky的逻辑 (建立的前提需要维护一个 tcp 流的状态,
+具体可以见: [RFC793](https://www.rfc-editor.org/rfc/rfc793#section-3.2))
 
-- 对于丢包重传，也就是当前端（抓包侧），我们可以通过seq id 进行分析，也就是当 seq id 并不是预期的，预期 seq id 应该是我已经发送数据包的id，可以通过上一帧计算所得，当不是的时候，那么就会报错 `Out-Of-Order` ，**并且这里并不会对丢包重传的包进行流量解析**！
-- Window Update 帧，主要是流控，都是由数据接收方进行控制，比如A给B发送需要B进行控制窗口流量大小（和HTTP2很相似）！这里还会有 `TCP Window Full` 表示接受区满了！
+- 对于丢包重传，也就是当前端（抓包侧），我们可以通过seq id 进行分析，也就是当 seq id 并不是预期的，预期 seq id
+  应该是我已经发送数据包的id，可以通过上一帧计算所得，当不是的时候，那么就会报错 `Out-Of-Order` ，**并且这里并不会对丢包重传的包进行流量解析
+  **！
+- Window Update
+  帧，主要是流控，都是由数据接收方进行控制，比如A给B发送需要B进行控制窗口流量大小（和HTTP2很相似）！这里还会有 `TCP Window Full`
+  表示接受区满了！
 - TCP Dup ACK 帧，其实是TCP Option，为了避免重传冗余！
 - seq id 表示: 已经发送的数据包（offset+payload size）,特殊情况对于握手帧来说payloadsize 虽然1等于0，但是实际上按照1来处理！
 - ack id 表示: 已经接收到的数据包
 
 Q: 应用层可能会传递大包，导致TCP传输时会拆分成很多数据包，也就会一个帧中的Payload并不能完成解析请求！
 
-A: **wireshark 其实只直接解析单帧数据包**！我这里做的比较tricky的逻辑就是，对于一个PING-PONG 模型来说，那么假设它发送数据包，那么此时TCP流一定未收到数据，也就是ACK ID一样是一样的！这个也就是建立在单连接串行处理请求的情况！**对于多路复用来说可能会存在同时请求包、响应包传递，所以目前不支持这个！**
+A: **wireshark 其实只直接解析单帧数据包**！我这里做的比较tricky的逻辑就是，对于一个PING-PONG
+模型来说，那么假设它发送数据包，那么此时TCP流一定未收到数据，也就是ACK ID一样是一样的！这个也就是建立在单连接串行处理请求的情况！
+**对于多路复用来说可能会存在同时请求包、响应包传递，所以目前不支持这个！**
 
 Q: 何时解析数据包？
 
-A: 其实TCP会有几个帧表示数据帧，对于 PSH 来说是告诉对方有数据要接收，那么一定需要去解析！但是假如大包被拆分成多个帧，那么我们也需要特殊处理，因为不一定需要PSH是最后一个包，因此对于全部的ACK帧我们都进行了解包！
+A: 其实TCP会有几个帧表示数据帧，对于 PSH
+来说是告诉对方有数据要接收，那么一定需要去解析！但是假如大包被拆分成多个帧，那么我们也需要特殊处理，因为不一定需要PSH是最后一个包，因此对于全部的ACK帧我们都进行了解包！
 
 # Roadmap
 
@@ -72,8 +96,9 @@ A: 其实TCP会有几个帧表示数据帧，对于 PSH 来说是告诉对方有
 ## 在线流量解析
 
 1. 这里本质上是用`tcpdump -X` 输出hexdump，通过管道符应用程序拿到console输出，解析出hexdump内容，进行流量解析！
-2. 解析失败也不会丢失内容，需要 `devtool tcpdump  -X`  dump内容！
-3. idl 定义， base信息可以见: [base.thrift](https://github.com/cloudwego/kitex/blob/develop/pkg/generic/map_test/idl/base.thrift)
+2. 解析失败也不会丢失内容，需要 `devtool tcpdump -X`  dump内容！
+3. idl 定义，
+   base信息可以见: [base.thrift](https://github.com/cloudwego/kitex/blob/develop/pkg/generic/map_test/idl/base.thrift)
 
 ```thrift
 namespace go example
@@ -213,10 +238,9 @@ Content-Length: 18
 
 ```go
 type SourceReader interface {
-	io.Reader
-	Peek(int) ([]byte, error)
+io.Reader
+Peek(int) ([]byte, error)
 }
 
-type Decoder func(ctx *Context, reader SourceReader) error
+type Decoder func (ctx *Context, reader SourceReader) error
 ```
-

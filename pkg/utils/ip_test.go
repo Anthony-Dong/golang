@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,4 +24,8 @@ func TestGetPort(t *testing.T) {
 		port, _ := GetPort("[fe80::1]:8080")
 		assert.Equal(t, port, 8080)
 	}
+}
+
+func TestGetAllIP(t *testing.T) {
+	fmt.Println(GetAllIP(true))
 }

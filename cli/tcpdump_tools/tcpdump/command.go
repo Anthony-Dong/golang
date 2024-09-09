@@ -7,13 +7,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/anthony-dong/golang/pkg/utils"
-
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/spf13/cobra"
 
 	"github.com/anthony-dong/golang/pkg/tcpdump"
+	"github.com/anthony-dong/golang/pkg/utils"
 )
 
 func NewCommand() (*cobra.Command, error) {
@@ -22,10 +21,10 @@ func NewCommand() (*cobra.Command, error) {
 		filename string
 	)
 	cmd := &cobra.Command{
-		Use:     `tcpdump [-r file] [-v] [-X] [--max dump size]`,
+		Use:     `tcpdump_tools [-r file] [-v] [-X] [--max dump size]`,
 		Short:   `Decode tcpdump file & stream`,
-		Long:    `decode tcpdump file, help doc: https://github.com/anthony-dong/golang/tree/master/command/tcpdump`,
-		Example: `  tcpdump 'port 8080' -X -l -n | gtool tcpdump`,
+		Long:    `decode tcpdump file, help doc: https://github.com/anthony-dong/golang/tree/master/cli/tcpdump_tools`,
+		Example: `  tcpdump 'port 8080' -X -l -n | tcpdump_tools`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd.Context(), filename, cfg)
 		},

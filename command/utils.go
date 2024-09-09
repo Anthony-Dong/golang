@@ -15,7 +15,7 @@ func ExitError(err error) {
 	os.Exit(1)
 }
 
-func AddCommandWithConfig[T any](cmd *cobra.Command, config *T, foo func(config *T) (*cobra.Command, error)) error {
+func AddCommandWithConfig[T any](cmd *cobra.Command, config func() *T, foo func(config func() *T) (*cobra.Command, error)) error {
 	subCmd, err := foo(config)
 	if err != nil {
 		return err

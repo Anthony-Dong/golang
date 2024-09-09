@@ -11,6 +11,9 @@ func NewCommand() (*cobra.Command, error) {
 	if err := command.AddCommand(cmd, NewEchoServiceCommand); err != nil {
 		return nil, err
 	}
+	if err := command.AddCommand(cmd, NewHTTPEchoServiceCommand); err != nil {
+		return nil, err
+	}
 	if err := command.AddCommand(cmd, NewBenchmarkEchoServiceCommand); err != nil {
 		return nil, err
 	}

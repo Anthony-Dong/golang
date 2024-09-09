@@ -21,7 +21,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func NewCommand(config *command.RunTaskConfig) (*cobra.Command, error) {
+func NewCommand(configProvider func() *command.RunTaskConfig) (*cobra.Command, error) {
 	filename := ""
 	list := false
 	debug := false
@@ -31,6 +31,7 @@ func NewCommand(config *command.RunTaskConfig) (*cobra.Command, error) {
 		Use:   "run",
 		Short: `Run task templates`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			config := configProvider()
 			if config == nil {
 				config = &command.RunTaskConfig{}
 			}

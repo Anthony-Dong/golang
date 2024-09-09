@@ -13,7 +13,7 @@ import (
 	"github.com/anthony-dong/golang/pkg/utils"
 )
 
-func NewCurlCommand(config *command.CurlConfig) (*cobra.Command, error) {
+func NewCurlCommand(configProvider func() *command.CurlConfig) (*cobra.Command, error) {
 	reqUrl := ""
 	reqBody := ""
 	reqHeader := make([]string, 0)
@@ -42,6 +42,7 @@ func NewCurlCommand(config *command.CurlConfig) (*cobra.Command, error) {
 			if !showExample && !listMethods {
 				logs.CtxInfo(ctx, "rpc request: %s", rpcRequest.String())
 			}
+			config := configProvider()
 			if config != nil && config.NewClient != nil {
 				if client, err = config.NewClient(ctx, rpcRequest, &idlInfo); err != nil {
 					return err

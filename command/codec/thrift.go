@@ -3,10 +3,11 @@ package codec
 import (
 	"bufio"
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/anthony-dong/golang/pkg/utils"
 
@@ -17,7 +18,13 @@ import (
 
 // echo "AAAAEYIhAQRUZXN0HBwWAhUCAAAA" | bin/gtool codec base64 --decode | bin/gtool codec thrift | jq
 func newThriftCodecCmd() (*cobra.Command, error) {
-	messageType := "message"
+	debug := false
+	debugLog := func(format string, v ...interface{}) {
+		if !debug {
+			return
+		}
+		fmt.Fprintf(os.Stderr, "[DEBUG] "+format+"\n", v...)
+	}
 	cmd := &cobra.Command{
 		Use:   "thrift",
 		Short: "decode thrift protocol",
@@ -25,61 +32,62 @@ func newThriftCodecCmd() (*cobra.Command, error) {
 			if !utils.CheckStdInFromPiped() {
 				return cmd.Help()
 			}
-			var (
-				result       error
-				wrapperError = func(err error) {
-					if result == nil {
-						result = err
-						return
-					}
-					result = fmt.Errorf("%s\n%s", result.Error(), err.Error())
-				}
-				ctx = cmd.Context()
-			)
-			handlerStruct := func(r io.Reader, proto thrift_codec.Protocol) error {
-				data, err := thrift_codec.DecodeMessage(ctx, thrift_codec.NewTProtocol(r, proto))
+			ctx := cmd.Context()
+			input, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				return fmt.Errorf(`read Stdin find err: %v`, err)
+			}
+
+			if decodeString, err := base64.StdEncoding.DecodeString(strings.TrimSpace(string(input))); err == nil {
+				debugLog("the input data encode type is base64")
+				input = decodeString
+			}
+
+			handlerStruct := func(payload []byte, proto thrift_codec.Protocol) error {
+				data, err := thrift_codec.DecodeStruct(ctx, thrift_codec.NewTProtocol(bytes.NewBuffer(payload), proto))
 				if err != nil {
-					wrapperError(err)
-					return err
+					return fmt.Errorf(`decode struct find err(proto=%s): %v`, proto, err)
 				}
-				data.Protocol = proto
 				_, _ = os.Stdout.WriteString(utils.ToJson(data))
 				return nil
 			}
-			switch messageType {
-			case "message":
-				bufReader := bufio.NewReader(os.Stdin)
-				ctx = thrift_codec.InjectMateInfo(ctx)
-				protocol, err := thrift_codec.GetProtocol(ctx, bufReader)
+
+			handlerMessage := func(payload []byte) error {
+				buffer := bufio.NewReader(bytes.NewBuffer(payload))
+				protocol, err := thrift_codec.GetProtocol(ctx, buffer)
 				if err != nil {
-					return err
+					return fmt.Errorf(`decode message find err: %v`, err)
 				}
-				data, err := thrift_codec.DecodeMessage(ctx, thrift_codec.NewTProtocol(bufReader, protocol))
+				data, err := thrift_codec.DecodeMessage(ctx, thrift_codec.NewTProtocol(buffer, protocol))
 				if err != nil {
-					return err
+					return fmt.Errorf(`decode message find err(proto=%s): %v`, protocol, err)
 				}
-				data.MetaInfo = thrift_codec.GetMateInfo(ctx)
 				data.Protocol = protocol
 				_, _ = os.Stdout.WriteString(utils.ToJson(data))
 				return nil
-			case "struct":
-				data, _ := ioutil.ReadAll(os.Stdin)
-				if err := handlerStruct(bytes.NewReader(data), thrift_codec.FramedBinary); err == nil {
-					return nil
-				}
-				if err := handlerStruct(bytes.NewReader(data), thrift_codec.FramedUnStrictBinary); err == nil {
-					return nil
-				}
-				if err := handlerStruct(bytes.NewReader(data), thrift_codec.UnframedBinary); err == nil {
-					return nil
-				}
-				if err := handlerStruct(bytes.NewReader(data), thrift_codec.UnframedCompact); err == nil {
-					return nil
-				}
 			}
-			return result
+
+			if err = handlerMessage(input); err == nil {
+				return nil
+			}
+			debugLog("handlerMessage find err: %v", err.Error())
+
+			for _, proto := range []thrift_codec.Protocol{
+				thrift_codec.UnframedBinary,
+				thrift_codec.UnframedCompact,
+				thrift_codec.FramedBinary,
+				thrift_codec.FramedCompact,
+			} {
+				if err = handlerStruct(input, proto); err == nil {
+					debugLog("proto is: %s", proto)
+					return nil
+				}
+				debugLog("handlerStruct(%s) find err: %v", proto, err.Error())
+			}
+
+			return fmt.Errorf(`invalid thrift payload`)
 		},
 	}
-	cmd.Flags().StringVar(&messageType, "type", "message", "消息类型, (struct|message)")
+	cmd.Flags().BoolVar(&debug, "debug", false, "enable debug")
 	return cmd, nil
 }

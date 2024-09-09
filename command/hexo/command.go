@@ -12,7 +12,7 @@ import (
 	"github.com/anthony-dong/golang/pkg/utils"
 )
 
-func NewCommand(config *command.HexoConfig) (*cobra.Command, error) {
+func NewCommand(config func() *command.HexoConfig) (*cobra.Command, error) {
 	cmd := &cobra.Command{Use: "hexo", Short: "The Hexo tool"}
 	if err := command.AddCommandWithConfig(cmd, config, NewBuildCmd); err != nil {
 		return nil, err
@@ -30,12 +30,13 @@ type hexoConfig struct {
 	TargetDir string   `json:"target_dir"`
 }
 
-func NewBuildCmd(config *command.HexoConfig) (*cobra.Command, error) {
+func NewBuildCmd(configProvider func() *command.HexoConfig) (*cobra.Command, error) {
 	var (
 		cfg = &hexoConfig{}
 	)
 	cmd := &cobra.Command{Use: "build", Short: "Build the markdown project to hexo"}
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		config := configProvider()
 		if config == nil {
 			config = &command.HexoConfig{}
 		}
