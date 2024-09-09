@@ -40,7 +40,7 @@ go get -v github.com/anthony-dong/golang
 
 # [devtool](cli/devtool)
 
-如何下载:  `go install -v github.com/anthony-dong/golang/cli/devtool@latest`  或者参考[此文档](cli/devtool)
+如何下载:  `go install -v github.com/anthony-dong/golang/cli/devtool@master`  或者参考[此文档](cli/devtool)
 
 ```shell
 ➜  devtool git:(master) devtool --help
@@ -75,7 +75,7 @@ To get more help with devtool, check out our guides at https://github.com/anthon
 1. 安装
 
 ```shell
-CGO_ENABLED=1 go install -v github.com/anthony-dong/golang/cli/tcpdump_tools@latest
+CGO_ENABLED=1 go install -v github.com/anthony-dong/golang/cli/tcpdump_tools@master
 ```
 
 2. 使用
@@ -105,7 +105,7 @@ protoc-gen-console
 1. 安装
 
 ```shell
-go install -v github.com/anthony-dong/golang/cli/protoc-gen-console@latest
+go install -v github.com/anthony-dong/golang/cli/protoc-gen-console@master
 ```
 
 2. 使用

@@ -16,7 +16,7 @@
 
 ```shell
 # linux(debian): sudo apt-get install -y libpcap-dev
-CGO_ENABLED=1 go install -v github.com/anthony-dong/golang/cli/tcpdump_tools@latest
+CGO_ENABLED=1 go install -v github.com/anthony-dong/golang/cli/tcpdump_tools@master
 ```
 
 3. 注意Linux环境需要安装 `libpcap`, 例如我是Debian, 可以执行 `sudo apt-get install libpcap-dev`,
