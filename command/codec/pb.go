@@ -16,8 +16,9 @@ import (
 // echo "CgVoZWxsbxCIBEIDCIgE" | bin/gtool codec base64 --decode | bin/gtool codec pb | jq
 func newPBCodecCmd() (*cobra.Command, error) {
 	cmd := &cobra.Command{
-		Use:   "pb",
-		Short: "decode protobuf protocol",
+		Use:     "pb",
+		Short:   "decode protobuf protocol binary message",
+		Example: `echo "CgVoZWxsbxCIBEIDCIgE" | devtool codec base64 --decode | devtool codec pb | jq`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !utils.CheckStdInFromPiped() {
 				return cmd.Help()
