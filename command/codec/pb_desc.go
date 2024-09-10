@@ -17,7 +17,10 @@ func NewProtocCodec() (*cobra.Command, error) {
 	isMockProto := false
 	cmd := &cobra.Command{
 		Use:   "protoc",
-		Short: `protoc desc codec tools`,
+		Short: `decode FileDescriptorSet`,
+		Example: `
+1. protoc --descriptor_set_out xxx.desc
+2. cat xxx.desc | devtool codec protoc`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !utils.CheckStdInFromPiped() {
 				return cmd.Help()
