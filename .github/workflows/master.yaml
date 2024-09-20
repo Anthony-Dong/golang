@@ -41,10 +41,3 @@ jobs:
         run: make build
       - name: Test
         run: make test
-      - name: Compress File
-        run: zip bin/devtool.zip -@ < .github/workflows/devtool.txt
-      - name: Upload devtool.zip
-        uses: actions/upload-artifact@master
-        with:
-          name: devtool.zip
-          path: bin/devtool.zip
