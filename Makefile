@@ -28,7 +28,7 @@ lint:
 
 .PHONY: check
 check:
-	go run cli/scan_keyword/main.go -dir . -keywords "Ynl0ZWQub3Jn;Ynl0ZWRhbmNlLm5ldA==;Ynl0ZWRhbmNlLm9yZw==;ZmVpc2h1LmNu"
+	go run cli/scan_keyword/main.go -dir . -keywords "Ynl0ZWQub3Jn;Ynl0ZWRhbmNlLm5ldA==;Ynl0ZWRhbmNlLm9yZw==;ZmVpc2h1LmNu;bGFya29mZmljZS5jb20="
 
 .PHONY: test
 test: ## go tool cover -html=cover.out
