@@ -40,7 +40,7 @@ jobs:
           draft: false
           prerelease: false
       - name: Upload to Release darwin_arm64
-        id: upload-release-asset
+        id: upload-release-asset-darwin_arm64
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -50,7 +50,7 @@ jobs:
           asset_name: devtool_darwin_arm64.zip
           asset_content_type: application/zip
       - name: Upload to Release darwin_amd64
-        id: upload-release-asset
+        id: upload-release-asset-darwin_amd64
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -60,7 +60,7 @@ jobs:
           asset_name: devtool_darwin_amd64.zip
           asset_content_type: application/zip
       - name: Upload to Release linux_amd64
-        id: upload-release-asset
+        id: upload-release-asset-linux_amd64
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -70,7 +70,7 @@ jobs:
           asset_name: devtool_linux_amd64.zip
           asset_content_type: application/zip
       - name: Upload to Release windows_amd64
-        id: upload-release-asset
+        id: upload-release-asset-windows_amd64
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
