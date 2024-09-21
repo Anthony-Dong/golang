@@ -34,6 +34,14 @@ check:
 test: ## go tool cover -html=cover.out
 	go test -coverprofile cover.out -count=1 ./pkg/...
 
+.PHONY: release_assert
+release_assert: build cors ## 创建 release assert
+	mv bin/tcpdump_tools bin/$$(go env GOOS)_$$(go env GOARCH)
+	zip -j bin/devtool_darwin_amd64.zip bin/darwin_amd64/*
+	zip -j bin/devtool_darwin_arm64.zip bin/darwin_arm64/*
+	zip -j bin/devtool_linux_amd64.zip bin/linux_amd64/*
+	zip -j bin/devtool_windows_amd64.zip bin/windows_amd64/*
+
 .PHONY: help
 help: ## help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf " \033[36m%-20s\033[0m  %s\n", $$1, $$2}' $(MAKEFILE_LIST)
