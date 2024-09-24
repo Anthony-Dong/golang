@@ -71,11 +71,11 @@ func testProto(t *testing.T, protocol Protocol) {
 	fmt.Println(hex.Dump(buf.Bytes()))
 
 	writeBuf := bufio.NewReader(buf)
-	readProtocol, err := GetProtocol(ctx, writeBuf)
+	readProtocol, _, err := GetProtocol(ctx, writeBuf)
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.Equal(t, readProtocol, protocol)
+	assert.Equal(t, readProtocol, protocol, fmt.Sprintf("test: %s", protocol))
 	readTProtocol := NewTProtocol(writeBuf, readProtocol)
 	readData := NewTestArgsData()
 	if err := readThriftMessage(readTProtocol, readData); err != nil {
@@ -222,10 +222,4 @@ func NewListData() *thriftstruct.ListData {
 		LStruct: []*thriftstruct.NormalStruct{NewNormalStruct()},
 		L_Ref:   []*thriftstruct.NormalStruct{NewNormalStruct()},
 	}
-}
-
-func TestInjectMateInfo(t *testing.T) {
-	ctx := context.Background()
-	ctx = InjectMateInfo(ctx)
-	t.Log(GetMateInfo(ctx))
 }

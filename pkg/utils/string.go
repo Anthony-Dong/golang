@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"encoding"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -89,6 +90,8 @@ func ToString(value interface{}) string {
 		return strconv.FormatFloat(float64(v), 'f', -1, 32)
 	case float64:
 		return strconv.FormatFloat(v, 'f', -1, 64)
+	case []byte:
+		return base64.StdEncoding.EncodeToString(v)
 	default:
 		if v == nil {
 			return ""
@@ -253,7 +256,7 @@ func PrettyJson(src string) string {
 func PrettyJsonBytes(src []byte) []byte {
 	out := bytes.Buffer{}
 	if err := json.Indent(&out, src, "", "    "); err != nil {
-		return nil
+		return src
 	}
 	return out.Bytes()
 }

@@ -190,7 +190,7 @@ func (f *FsHandler) HandleDirectory(dir string, w http.ResponseWriter, sortKey s
 		})
 	default:
 		sort.Slice(fileInfos, func(i, j int) bool {
-			return fileInfos[i].Name < fileInfos[j].Name
+			return strings.ToLower(fileInfos[i].Name) < strings.ToLower(fileInfos[j].Name)
 		})
 	}
 	fileInfos = append([]*FileInfo{

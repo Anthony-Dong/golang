@@ -50,7 +50,7 @@ func GetThriftExampleValue(tType *descriptor.TypeDescriptor, walk map[*descripto
 		return op.Generator.Instance(tType.Type), nil
 	}
 	switch tType.Type {
-	case descriptor.LIST:
+	case descriptor.LIST, descriptor.SET:
 		result := make([]interface{}, 0, op.GetListSize())
 		for x := 0; x < op.GetListSize(); x++ {
 			vv, err := GetThriftExampleValue(tType.Elem, walk, op)
@@ -100,6 +100,8 @@ func GetThriftExampleValue(tType *descriptor.TypeDescriptor, walk map[*descripto
 		}
 		delete(walk, tType.Struct)
 		return kv, nil
+	case descriptor.VOID:
+		return nil, nil
 	default:
 		return nil, fmt.Errorf(`not support thrift type: %v`, tType.Type)
 	}

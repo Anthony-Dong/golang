@@ -1,24 +1,34 @@
 package idl
 
-import "github.com/cloudwego/kitex/pkg/generic"
+import (
+	"sync"
 
-var _ DescriptorProvider = (*defaultDescriptorProvider)(nil)
+	"github.com/cloudwego/kitex/pkg/generic"
+	"github.com/cloudwego/kitex/pkg/generic/descriptor"
+)
+
+var _ generic.DescriptorProvider = (*defaultDescriptorProvider)(nil)
+
+func NewDescriptorProvider(desc *descriptor.ServiceDescriptor) *defaultDescriptorProvider {
+	result := &defaultDescriptorProvider{
+		desc: make(chan *descriptor.ServiceDescriptor, 1),
+	}
+	result.desc <- desc
+	return result
+}
 
 type defaultDescriptorProvider struct {
-	provider MemoryIDLProvider
+	desc  chan *descriptor.ServiceDescriptor
+	close sync.Once
 }
 
-func NewDescriptorProvider(provider MemoryIDLProvider) *defaultDescriptorProvider {
-	return &defaultDescriptorProvider{provider: provider}
+func (c *defaultDescriptorProvider) Close() error {
+	c.close.Do(func() {
+		close(c.desc)
+	})
+	return nil
 }
 
-func (m *defaultDescriptorProvider) DescriptorProvider() (generic.DescriptorProvider, error) {
-	idl, err := m.provider.MemoryIDL()
-	if err != nil {
-		return nil, err
-	}
-	//if provider, err := loadThriftDescriptorProvider(idl.Main, idl.IDLs); err == nil {
-	//	return provider, nil
-	//}
-	return loadThriftDescriptorProvider(idl.Main, fixThriftIDLForKitex(idl.IDLs))
+func (c *defaultDescriptorProvider) Provide() <-chan *descriptor.ServiceDescriptor {
+	return c.desc
 }

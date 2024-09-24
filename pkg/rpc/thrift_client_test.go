@@ -1,49 +1,61 @@
 package rpc
 
 import (
-	"net/http"
-	"net/http/httputil"
-	"net/url"
+	"context"
+	"path/filepath"
 	"testing"
+
+	"github.com/anthony-dong/golang/pkg/rpc/kitex_demo/handler"
+	"github.com/anthony-dong/golang/pkg/utils"
+	kitex_client "github.com/cloudwego/kitex/client"
+	"github.com/cloudwego/kitex/transport"
 )
 
-func Test_ThriftClient(t *testing.T) {
-	return
-	// local test
-	/*mainIdl := filepath.Join(utils.GetGoProjectDir(), "pkg/idl/test/api.thrift")
-	provider := idl.NewDescriptorProvider(idl.NewMemoryIDLProvider(mainIdl))
-	client := NewThriftClient(provider)
-	ctx := context.Background()
-	req := &Request{
-		Service:   "TestServiceName",
-		RPCMethod: "RPCAPI1",
-		Body:      []byte(`{"Field1": "success"}`),
-		Addr:      "127.0.0.1:8888",
-	}
-	jsonExample, err := NewThriftJsonExample(ctx, provider, "RPCAPI1")
-	t.Logf("example code: %s\n", jsonExample)
-
-	req.Body = []byte(jsonExample)
-	send, err := client.Do(ctx, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(utils.ToJson(send, true))*/
+func GetTestIDLPath() string {
+	return filepath.Join(utils.GetGoProjectDir(), "pkg/idl/test/api.thrift")
 }
 
-func TestNewRequest(t *testing.T) {
-	parse, err := url.Parse(`thrift://xxx.xxx.xxx/RPCMethod?env=xxx`)
+func TestThriftClient(t *testing.T) {
+	addr := ":10086"
+	server, err := handler.NewServer(addr)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(parse)
-	request, err := http.NewRequest("", "thrift://xxx.xxx.xxx/RPCMethod?env=xxx", nil)
+	go func() {
+		server.Run()
+	}()
+	defer server.Stop()
+	runTestClient(t, "a.b.c", addr)
+}
+
+func runTestClient(t *testing.T, serviceName, addr string) {
+	ctx := context.Background()
+	client, err := NewThriftClient(NewLocalIDLProvider(map[string]string{
+		serviceName: GetTestIDLPath(),
+	}))
 	if err != nil {
 		t.Fatal(err)
 	}
-	dumpRequest, err := httputil.DumpRequest(request, true)
-	if err != nil {
-		t.Fatal(err)
+	methods := []string{"TestStruct", "TestVoid", "TestOnewayVoid", "TestList", "TestSet", "TestMap", "TestIntMap", "TestString"}
+	for _, method := range methods {
+		t.Run(method, func(t *testing.T) {
+			if method != "TestOnewayVoid" {
+				return
+			}
+			exampleCode, err := client.GetExampleCode(ctx, serviceName, nil, method)
+			if err != nil {
+				t.Fatal(err)
+			}
+			resp, err := client.Do(ctx, &Request{RPCMethod: method, ServiceName: serviceName, Addr: addr, Body: exampleCode, Header: []*KV{
+				NewKV("k1", "v1"),
+				NewPersistentHeader("k2", "v2"),
+				NewTransientHeader("k11", "1"),
+				NewTransientHeader("k22", "2"),
+			}}, kitex_client.WithTransportProtocol(transport.TTHeaderFramed))
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Logf("method: %s, resp: %s\n", method, string(resp.Body))
+		})
 	}
-	t.Log(string(dumpRequest))
 }

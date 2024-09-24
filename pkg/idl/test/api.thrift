@@ -32,6 +32,12 @@ struct Response {
 
 
 service APIService {
-    Response RPCAPI1 (1: Request req) (api.get='/api/v1/query'),
-    Response RPCAPI2 (1: Request req) (api.get='/api/v1/query'),
+    Response TestStruct (1: Request req)
+    void TestVoid (1: Request req)
+    oneway void TestOnewayVoid (1: Request req)
+    list<Response> TestList (1: Request req)
+    set<Response> TestSet(1: Request req)
+    map<string, Response> TestMap(1: Request req)
+    map<i64, Response> TestIntMap(1: Request req)
+    string TestString(1: Request req)
 }

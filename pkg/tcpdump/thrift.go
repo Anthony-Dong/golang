@@ -12,8 +12,7 @@ import (
 
 func NewThriftDecoder() Decoder {
 	return func(ctx *Context, reader SourceReader) error {
-		ctx.Context = thrift_codec.InjectMateInfo(ctx.Context)
-		protocol, err := thrift_codec.GetProtocol(ctx, reader)
+		protocol, metaInfo, err := thrift_codec.GetProtocol(ctx, reader)
 		if err != nil {
 			return errors.Wrap(err, "decode thrift protocol error")
 		}
@@ -21,7 +20,7 @@ func NewThriftDecoder() Decoder {
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("decode thrift message error, protocol: %s", protocol))
 		}
-		result.MetaInfo = thrift_codec.GetMateInfo(ctx)
+		result.MetaInfo = metaInfo
 		result.Protocol = protocol
 		ctx.PrintPayload(utils.ToJson(result, true))
 		return nil

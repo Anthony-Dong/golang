@@ -55,7 +55,7 @@ func newThriftCodecCmd() (*cobra.Command, error) {
 
 			handlerMessage := func(payload []byte) error {
 				buffer := bufio.NewReader(bytes.NewBuffer(payload))
-				protocol, err := thrift_codec.GetProtocol(ctx, buffer)
+				protocol, metaInfo, err := thrift_codec.GetProtocol(ctx, buffer)
 				if err != nil {
 					return fmt.Errorf(`decode message find err: %v`, err)
 				}
@@ -63,6 +63,7 @@ func newThriftCodecCmd() (*cobra.Command, error) {
 				if err != nil {
 					return fmt.Errorf(`decode message find err(proto=%s): %v`, protocol, err)
 				}
+				data.MetaInfo = metaInfo
 				data.Protocol = protocol
 				_, _ = os.Stdout.WriteString(utils.ToJson(data))
 				return nil

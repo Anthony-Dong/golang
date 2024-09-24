@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/anthony-dong/golang/command"
-	"github.com/anthony-dong/golang/pkg/idl"
 	"github.com/anthony-dong/golang/pkg/logs"
 	"github.com/anthony-dong/golang/pkg/rpc"
 	"github.com/anthony-dong/golang/pkg/utils"
@@ -19,7 +18,7 @@ func NewCurlCommand(configProvider func() *command.CurlConfig) (*cobra.Command, 
 	reqHeader := make([]string, 0)
 	listMethods := false
 	showExample := false
-	idlInfo := rpc.IDLInfo{}
+	idlConfig := rpc.IDLConfig{}
 	timeout := time.Second * 180
 	enableModifyReq := false
 	cmd := &cobra.Command{
@@ -29,64 +28,65 @@ func NewCurlCommand(configProvider func() *command.CurlConfig) (*cobra.Command, 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			var (
-				client     rpc.Client
-				rpcRequest *rpc.Request
-				err        error
+				client *rpc.ThriftClient
+				req    *rpc.Request
+				err    error
 			)
-			rpcRequest, err = rpc.NewRpcRequest(reqUrl, reqHeader, reqBody)
+			req, err = rpc.NewRpcRequest(reqUrl, reqHeader, reqBody)
 			if err != nil {
 				return err
 			}
-			rpcRequest.Timeout = utils.NewJsonDuration(timeout)
-			rpcRequest.EnableModifyRequest = enableModifyReq
+			req.Timeout = utils.NewJsonDuration(timeout)
+			req.EnableModifyRequest = enableModifyReq
+			req.IDLConfig = &idlConfig
 			if !showExample && !listMethods {
-				logs.CtxInfo(ctx, "rpc request: %s", rpcRequest.String())
+				logs.CtxInfo(ctx, "rpc request info: %s", utils.ToString(req.BasicInfo()))
 			}
 			config := configProvider()
-			if config != nil && config.NewClient != nil {
-				if client, err = config.NewClient(ctx, rpcRequest, &idlInfo); err != nil {
+			if config != nil && config.NewThriftClient != nil {
+				if client, err = config.NewThriftClient(ctx, req); err != nil {
 					return err
 				}
 			} else {
-				if idlInfo.Main == "" {
-					return fmt.Errorf(`new local idl find err: not found main idl: %q`, idlInfo.Main)
+				if idlConfig.Main == "" {
+					return fmt.Errorf(`new local idl find err: not found main idl: %q`, idlConfig.Main)
 				}
-				client = rpc.NewThriftClient(idl.NewDescriptorProvider(idl.NewMemoryIDLProvider(idlInfo.Main)))
+				if client, err = rpc.NewThriftClient(rpc.NewLocalIDLProvider(map[string]string{req.ServiceName: idlConfig.Main})); err != nil {
+					return err
+				}
 			}
-
 			if listMethods {
-				allMethods, err := client.ListMethods(ctx)
+				allMethods, err := client.ListMethods(ctx, req.ServiceName, req.IDLConfig)
 				if err != nil {
 					return fmt.Errorf(`list methods find err: %v`, err)
 				}
 				logs.CtxInfo(ctx, "methods:\n%s", utils.ToJson(allMethods, true))
 				return nil
 			}
-
 			if showExample {
-				jsonExample, err := client.GetExampleCode(ctx, &rpc.Method{RPCMethod: rpcRequest.RPCMethod})
+				jsonExample, err := client.GetExampleCode(ctx, req.ServiceName, req.IDLConfig, req.ServiceName)
 				if err != nil {
 					return fmt.Errorf(`new request example find err: %v`, err)
 				}
-				logs.CtxInfo(ctx, "new request example\n%s", jsonExample.Body)
+				logs.CtxInfo(ctx, "new request example\n%s", jsonExample)
 				return nil
 			}
 
-			rpcResponse, err := client.Do(ctx, rpcRequest)
+			resp, err := client.Do(ctx, req)
 			if err != nil {
 				return fmt.Errorf(`do rpc request find err: %v`, err)
 			}
 			flag := "success"
-			if rpcResponse.IsError {
+			if resp.IsError {
 				flag = "error"
 			}
-			logs.CtxInfo(ctx, "rpc response %s: %s", flag, rpcResponse.String())
+			logs.CtxInfo(ctx, "rpc response %s:\n%s", flag, utils.PrettyJsonBytes(resp.Body))
 			return nil
 		},
 	}
 	cmd.Flags().StringVar(&reqUrl, "url", "", "The request url")
-	cmd.Flags().StringVar(&idlInfo.Main, "idl", "", "The main IDL local path")
-	cmd.Flags().StringVar(&idlInfo.Branch, "branch", "", "The Remote IDL branch/version/commit(if supports it)")
+	cmd.Flags().StringVar(&idlConfig.Main, "idl", "", "The main IDL local path")
+	cmd.Flags().StringVar(&idlConfig.Branch, "branch", "", "The Remote IDL branch/version/commit(if supports it)")
 	cmd.Flags().StringSliceVarP(&reqHeader, "header", "H", []string{}, "The request header")
 	cmd.Flags().StringVar(&reqBody, "data", "", "The request body")
 	cmd.Flags().BoolVar(&listMethods, "methods", false, "List all the methods")

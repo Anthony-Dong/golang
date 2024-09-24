@@ -106,8 +106,8 @@ func (t *thriftHandler) HandlerConn(readConn net.Conn) error {
 
 func (t *thriftHandler) ReadMessage(_reader *bufio.Reader) (*thrift_codec.ThriftMessage, []byte, error) {
 	reader := &copyReader{reader: _reader}
-	ctx := thrift_codec.InjectMateInfo(context.Background())
-	protocol, err := thrift_codec.GetProtocol(ctx, reader)
+	ctx := context.Background()
+	protocol, metaInfo, err := thrift_codec.GetProtocol(ctx, reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("decode thrift protocol error: %v", err)
 	}
@@ -115,7 +115,7 @@ func (t *thriftHandler) ReadMessage(_reader *bufio.Reader) (*thrift_codec.Thrift
 	if err != nil {
 		return nil, nil, fmt.Errorf("decode thrift message error: %v, protocol: %s", err, protocol)
 	}
-	result.MetaInfo = thrift_codec.GetMateInfo(ctx)
+	result.MetaInfo = metaInfo
 	result.Protocol = protocol
 	return result, reader.buffer.Bytes(), nil
 }

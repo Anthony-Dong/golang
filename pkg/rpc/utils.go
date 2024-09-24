@@ -18,10 +18,10 @@ func NewRpcRequest(urlStr string, headers []string, body string) (*Request, erro
 	}
 	query := parsedUrl.Query()
 	req := &Request{
-		Protocol:  parsedUrl.Scheme,
-		Service:   parsedUrl.Host,
-		RPCMethod: strings.TrimPrefix(parsedUrl.Path, "/"),
-		Body:      []byte(body),
+		Protocol:    parsedUrl.Scheme,
+		ServiceName: parsedUrl.Host,
+		RPCMethod:   strings.TrimPrefix(parsedUrl.Path, "/"),
+		Body:        []byte(body),
 		Header: utils.MapFromSlice(headers, func(header string) *KV {
 			return NewKV(utils.SplitKV(header, ":"))
 		}),
@@ -37,7 +37,7 @@ func NewRpcRequest(urlStr string, headers []string, body string) (*Request, erro
 			return ret
 		}),
 	}
-	if req.Service == "" {
+	if req.ServiceName == "" {
 		return nil, fmt.Errorf(`invalid rpc service name. request url like`)
 	}
 	return req, err

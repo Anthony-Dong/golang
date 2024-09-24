@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/anthony-dong/golang/pkg/logs"
+	"github.com/cloudwego/kitex/transport"
+
 	"github.com/cloudwego/kitex/pkg/generic/descriptor"
 	"github.com/iancoleman/orderedmap"
 
@@ -21,27 +24,26 @@ import (
 	"github.com/anthony-dong/golang/pkg/utils"
 )
 
-var _ Client = (*ThriftClient)(nil)
-
+// ThriftClient todo keepalive
 type ThriftClient struct {
-	IDLProvider       idl.DescriptorProvider
-	Option            ThriftClientOption
-	NewClient         func(ctx context.Context, serviceName string, provider idl.DescriptorProvider, option ThriftClientOption) (v genericclient.Client, err error)
-	PreHandlerRequest func(ctx context.Context, req *Request) (context.Context, []callopt.Option, error)
+	idlProvider IDLProvider
+	idlCache    map[string]*descriptor.ServiceDescriptor
+	Option      ThriftClientOption
 }
 
-func NewThriftClient(provider idl.DescriptorProvider, ops ...func(client *ThriftClientOption)) *ThriftClient {
+func NewThriftClient(provider IDLProvider, ops ...func(client *ThriftClientOption)) (*ThriftClient, error) {
 	if provider == nil {
-		panic(`new thrift client find err: idl provider is nil`)
+		return nil, fmt.Errorf(`idl provider is nil`)
 	}
-	option := ThriftClientOption{Options: []kitex_client.Option{}}
+	option := ThriftClientOption{}
 	for _, op := range ops {
 		op(&option)
 	}
 	return &ThriftClient{
-		IDLProvider: provider,
+		idlProvider: provider,
+		idlCache:    map[string]*descriptor.ServiceDescriptor{},
 		Option:      option,
-	}
+	}, nil
 }
 
 func init() {
@@ -54,7 +56,8 @@ const (
 )
 
 type ThriftClientOption struct {
-	Options []kitex_client.Option
+	NewClient         func(ctx context.Context, serviceName string, provider generic.DescriptorProvider, ops []kitex_client.Option) (v genericclient.Client, err error)
+	PreHandlerRequest func(ctx context.Context, req *Request) (context.Context, []callopt.Option, error)
 }
 
 func (t *ThriftClient) preHandlerRequest(ctx context.Context, req *Request) (context.Context, []callopt.Option, error) {
@@ -87,30 +90,69 @@ func (t *ThriftClient) preHandlerRequest(ctx context.Context, req *Request) (con
 	return ctx, options, nil
 }
 
-func (t *ThriftClient) Do(ctx context.Context, req *Request) (*Response, error) {
+func NewTransientHeader(key string, value string) *KV {
+	return &KV{Key: metainfo.PrefixTransient + key, Value: value}
+}
+
+func NewPersistentHeader(key string, value string) *KV {
+	return &KV{Key: metainfo.PrefixPersistent + key, Value: value}
+}
+
+func (t *ThriftClient) GetIDLDescriptor(ctx context.Context, serviceName string, idlConfig *IDLConfig) (*descriptor.ServiceDescriptor, error) {
+	if idlConfig == nil {
+		idlConfig = &IDLConfig{}
+	}
+	key := serviceName + ":" + utils.ToJson(idlConfig)
+	if desc := t.idlCache[key]; desc != nil {
+		return desc, nil
+	}
+	memoryIDL, err := t.idlProvider.MemoryIDL(ctx, serviceName, idlConfig)
+	if err != nil {
+		return nil, err
+	}
+	desc, err := idl.ParseThriftIDL(memoryIDL)
+	if err != nil {
+		return nil, err
+	}
+	t.idlCache[key] = desc
+	return desc, nil
+}
+
+func (t *ThriftClient) newClient(ctx context.Context, req *Request, desc *descriptor.ServiceDescriptor, ops []kitex_client.Option) (genericclient.Client, error) {
+	if GetValue(req.Tag, "protocol") == "framed" {
+		ops = append(ops, kitex_client.WithTransportProtocol(transport.TTHeaderFramed))
+		logs.CtxInfo(ctx, "use custom protocol: %s", "TTHeaderFramed")
+	}
+	provider := idl.NewDescriptorProvider(desc)
+	if t.Option.NewClient != nil {
+		return t.Option.NewClient(ctx, req.ServiceName, provider, ops)
+	}
+	return t.newDefaultClient(ctx, req.ServiceName, provider, ops)
+}
+
+func (t *ThriftClient) Do(ctx context.Context, req *Request, ops ...kitex_client.Option) (*Response, error) {
 	if req.RPCMethod == "" {
 		return nil, fmt.Errorf(`req method connot be empty`)
 	}
-	if req.Service == "" {
-		req.Service = "-"
+	if req.ServiceName == "" {
+		req.ServiceName = "-"
 	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
-
-	newClientFunc := t.newClient
-	if t.NewClient != nil {
-		newClientFunc = t.NewClient
+	idlDesc, err := t.GetIDLDescriptor(ctx, req.ServiceName, req.IDLConfig)
+	if err != nil {
+		return nil, err
 	}
-	client, err := newClientFunc(ctx, req.Service, t.IDLProvider, t.Option)
+	client, err := t.newClient(ctx, req, idlDesc, ops)
 	if err != nil {
 		return nil, err
 	}
 	defer client.Close()
 
 	preHandlerRequest := t.preHandlerRequest
-	if t.PreHandlerRequest != nil {
-		preHandlerRequest = t.PreHandlerRequest
+	if t.Option.PreHandlerRequest != nil {
+		preHandlerRequest = t.Option.PreHandlerRequest
 	}
 	rpcCtx, callOps, err := preHandlerRequest(ctx, req)
 	if err != nil {
@@ -126,60 +168,45 @@ func (t *ThriftClient) Do(ctx context.Context, req *Request) (*Response, error) 
 					"error": err.Error(),
 				})
 			}
-			str, _ := r.(string)
-			return utils.String2Bytes(str)
+			respData, _ := r.(string)
+			if formatResp, err := FormatResponse(idlDesc, req.RPCMethod, respData); err == nil {
+				respData = formatResp
+			}
+			return utils.String2Bytes(respData)
 		}(response),
 		IsError: err != nil,
 		Header:  []*KV{}, // thrift rpc 不支持设置response header
 	}, nil
 }
 
-func (t *ThriftClient) newClient(ctx context.Context, serviceName string, provider idl.DescriptorProvider, option ThriftClientOption) (v genericclient.Client, err error) {
-	descriptorProvider, err := provider.DescriptorProvider()
-	if err != nil {
-		return nil, err
-	}
-	thriftGeneric, err := generic.JSONThriftGeneric(descriptorProvider)
+func (t *ThriftClient) newDefaultClient(ctx context.Context, serviceName string, provider generic.DescriptorProvider, ops []kitex_client.Option) (v genericclient.Client, err error) {
+	thriftGeneric, err := generic.JSONThriftGeneric(provider)
 	if err != nil {
 		return nil, fmt.Errorf("new thrift json client find err: %v", err)
 	}
-	kClient, err := genericclient.NewClient(serviceName, thriftGeneric, option.Options...)
+	kClient, err := genericclient.NewClient(serviceName, thriftGeneric, ops...)
 	if err != nil {
 		return nil, fmt.Errorf("new thrift client find err: %v", err)
 	}
 	return kClient, nil
 }
 
-func (t *ThriftClient) GetIDLDescriptor() (*descriptor.ServiceDescriptor, error) {
-	provider, err := t.IDLProvider.DescriptorProvider()
+func (t *ThriftClient) ListMethods(ctx context.Context, serviceName string, idlConfig *IDLConfig) ([]string, error) {
+	idlDescriptor, err := t.GetIDLDescriptor(ctx, serviceName, idlConfig)
 	if err != nil {
 		return nil, err
 	}
-	return <-provider.Provide(), nil
+	return ListMethods(ctx, idlDescriptor)
 }
 
-func (t *ThriftClient) ListMethods(ctx context.Context) ([]*Method, error) {
-	provider, err := t.GetIDLDescriptor()
+func (t *ThriftClient) GetExampleCode(ctx context.Context, serviceName string, idlConfig *IDLConfig, method string) ([]byte, error) {
+	idlDescriptor, err := t.GetIDLDescriptor(ctx, serviceName, idlConfig)
 	if err != nil {
 		return nil, err
 	}
-	result := make([]*Method, 0, len(provider.Functions))
-	for _, elem := range provider.Functions {
-		result = append(result, &Method{
-			RPCMethod: elem.Name,
-		})
-	}
-	return result, nil
-}
-
-func (t *ThriftClient) GetExampleCode(ctx context.Context, method *Method) (*ExampleCode, error) {
-	provider, err := t.GetIDLDescriptor()
-	if err != nil {
-		return nil, err
-	}
-	function := provider.Functions[method.RPCMethod]
+	function := idlDescriptor.Functions[method]
 	if function == nil {
-		return nil, fmt.Errorf(`not found rpc method: %s`, method.RPCMethod)
+		return nil, fmt.Errorf(`not found rpc method: %s`, method)
 	}
 	value, err := GetThriftExampleValue(function.Request, nil, NewThriftExampleOption())
 	if err != nil {
@@ -192,5 +219,5 @@ func (t *ThriftClient) GetExampleCode(ctx context.Context, method *Method) (*Exa
 			value = req
 		}
 	}
-	return &ExampleCode{Body: utils.ToJsonByte(value, true)}, nil
+	return utils.ToJsonByte(value, true), nil
 }

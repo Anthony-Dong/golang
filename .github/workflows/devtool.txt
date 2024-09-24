@@ -1,4 +1,0 @@
-bin/darwin_amd64/devtool
-bin/darwin_arm64/devtool
-bin/linux_amd64/devtool
-bin/windows_amd64/devtool.exe

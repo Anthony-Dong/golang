@@ -43,5 +43,5 @@ type HexoConfig struct {
 }
 
 type CurlConfig struct {
-	NewClient func(ctx context.Context, request *rpc.Request, idl *rpc.IDLInfo) (rpc.Client, error)
+	NewThriftClient func(ctx context.Context, request *rpc.Request) (*rpc.ThriftClient, error)
 }
