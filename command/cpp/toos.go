@@ -36,6 +36,9 @@ type Tools struct {
 	BuildType string   `json:"BuildType,omitempty" yaml:"BuildType,omitempty"` // 构建类型
 
 	objects []string
+
+	fileBuildArgs utils.SyncMap[string, *buildAndLink]
+	objLinkArgs   utils.SyncMap[string, *buildAndLink]
 }
 
 const BuildTypeDebug = "debug"
@@ -63,8 +66,29 @@ func (t *Tools) Build(ctx context.Context, thread int) error {
 	return wg.Wait()
 }
 
+func (t *Tools) readFileArgs(ctx context.Context, file string) (*buildAndLink, error) {
+	return t.fileBuildArgs.LoadOrStoreFunc(file, func() (*buildAndLink, error) {
+		args, err := readFileArgs(file)
+		if err != nil {
+			return nil, err
+		}
+		logs.CtxDebug(ctx, "file [%s] custom args: %s", file, utils.ToJson(args))
+		return args, nil
+	})
+}
+
 func (t *Tools) build(ctx context.Context, src string) (string, error) {
+	object := t.NewObjectName(src)
 	args := t.BuildArgs
+
+	// set custom build args
+	customArgs, err := t.readFileArgs(ctx, src)
+	if err != nil {
+		return "", err
+	}
+	t.objLinkArgs.Store(object, customArgs)
+	args = append(args, customArgs.buildArgs...)
+
 	if !t.hasArgs(args, "-W") {
 		args = append(args, "-Wall")
 	}
@@ -85,7 +109,6 @@ func (t *Tools) build(ctx context.Context, src string) (string, error) {
 			args = append(args, "-g") // Generate source-level debug information
 		}
 	}
-	object := t.NewObjectName(src)
 	args = append(args, "-c", src)
 	args = append(args, "-o", object)
 	command := exec.Command(t.CXX, args...)
@@ -119,6 +142,12 @@ func (t *Tools) linkBinary(ctx context.Context, output string) error {
 		args = append(args, object)
 	}
 	args = append(args, t.LinkArgs...)
+	// custom link args
+	for _, object := range t.objects {
+		if value := t.objLinkArgs.Get(object); value != nil {
+			args = append(args, value.linkArgs...)
+		}
+	}
 	command := exec.Command(t.CXX, args...)
 	command.Dir = t.Pwd
 	logs.CtxDebug(ctx, "Link: %s", utils.PrettyCmd(command))
@@ -132,6 +161,11 @@ func (t *Tools) linkLibrary(ctx context.Context, output string) error {
 		args = append(args, "-v")
 	}
 	args = append(args, t.LinkArgs...)
+	for _, object := range t.objects {
+		if value := t.objLinkArgs.Get(object); value != nil {
+			args = append(args, value.linkArgs...)
+		}
+	}
 	args = append(args, output)
 	for _, object := range t.objects {
 		args = append(args, object)

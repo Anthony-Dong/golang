@@ -57,6 +57,15 @@ func (o *OrderedMap) Get(key string) (interface{}, bool) {
 	return val, exists
 }
 
+func (o *OrderedMap) GetOr(key string) interface{} {
+	return o.values[key]
+}
+
+func (o *OrderedMap) Exist(key string) bool {
+	_, exists := o.values[key]
+	return exists
+}
+
 func (o *OrderedMap) Set(key string, value interface{}) {
 	_, exists := o.values[key]
 	if !exists {
@@ -88,6 +97,12 @@ func (o *OrderedMap) Keys() []string {
 
 func (o *OrderedMap) Values() map[string]interface{} {
 	return o.values
+}
+
+func (o *OrderedMap) Foreach(foreach func(key string, value interface{})) {
+	for _, key := range o.keys {
+		foreach(key, o.values[key])
+	}
 }
 
 // SortKeys Sort the map keys using your sort func

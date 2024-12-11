@@ -9,14 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anthony-dong/golang/pkg/proxy/record"
-
 	"github.com/valyala/fasthttp"
 
 	"github.com/anthony-dong/golang/pkg/logs"
 )
 
-func NewHTTPProxyHandler(storage record.Storage) *httpProxyHandler {
+func NewHTTPProxyHandler(handler fasthttp.RequestHandler) *httpProxyHandler {
 	rootCert, err := tls.X509KeyPair(CA_CERT, CA_KEY)
 	if err != nil {
 		panic(err)
@@ -26,16 +24,18 @@ func NewHTTPProxyHandler(storage record.Storage) *httpProxyHandler {
 		panic(err)
 	}
 	return &httpProxyHandler{
-		HttpRecorder: record.NewHTTPRecorder(storage),
-		RootCert:     rootCert,
-		CertCache:    &certificateCacheHelper{max: 128},
+		RootCert:  rootCert,
+		CertCache: &certificateCacheHelper{max: 1024},
+		Handler:   handler,
 	}
 }
 
 type httpProxyHandler struct {
-	HttpRecorder *record.HttpRecorder
-	CertCache    *certificateCacheHelper
-	RootCert     tls.Certificate
+	CertCache *certificateCacheHelper
+	RootCert  tls.Certificate
+	Handler   fasthttp.RequestHandler
+
+	//EnableMITM func(host string) bool
 }
 
 func (t *httpProxyHandler) NewTLSConfig(host string) (*tls.Config, error) {
@@ -50,31 +50,40 @@ func (t *httpProxyHandler) NewTLSConfig(host string) (*tls.Config, error) {
 
 func (t *httpProxyHandler) HandlerConn(conn net.Conn) error {
 	httpConfig := NewDefaultHttpConfig()
-	handler := t.NewHTTPRequestHandler(httpConfig, NewHTTPClient(httpConfig))
+	handler := t.NewRequestHandler(httpConfig)
 	return NewHTTPServer(httpConfig, handler).ServeConn(conn)
 }
 
-func (t *httpProxyHandler) NewHTTPRequestHandler(cfg *HttpConfig, client *fasthttp.Client) fasthttp.RequestHandler {
+func (t *httpProxyHandler) NewRequestHandler(cfg *HttpConfig) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		method := string(ctx.Request.Header.Method())
 		if method == "CONNECT" {
 			defer ctx.Conn().Close()
 			if cfg.EnableMITM {
-				t.newMITMProxyRequestHandler(cfg, client)(ctx)
+				t.NewMITMProxyRequestHandler(cfg)(ctx)
 			} else {
-				t.newTCPProxyRequestHandler()(ctx)
+				t.NewTCPProxyRequestHandler()(ctx)
 			}
 			return
 		}
-		t.newHostProxyRequestHandler(client, false)(ctx)
+		t.NewHostProxyRequestHandler(false)(ctx)
 	}
+}
+
+func safeLoadHost(ctx *fasthttp.RequestCtx) string {
+	host := string(ctx.Request.Host())
+	if host == "" {
+		// CONNECT search.maven.org:443 HTTP/1.0
+		host = string(ctx.Request.Header.RequestURI())
+	}
+	return host
 }
 
 // HTTPS代理服务器的工作原理基于HTTP的CONNECT方法。与普通的HTTP代理（根据客户端的GET，POST等请求，代理服务器会直接进行处理并将结果返回给客户端）有所不同，HTTPS代理主要用于建立一个TCP的隧道，用于客户端和目标服务器的相互通信。
 // 1. 客户端向代理服务器发送一个CONNECT请求，请求中包含目标服务器的地址和端口号。
 // 2. 如果代理服务器允许此连接，它会与目标服务器建立TCP连接，并向客户端发送一个状态行，比如 "HTTP/1.0 200 Connection Established"，告知客户端可以开始发送请求到目标服务器了。
 // 3. 此时，代理服务器主要扮演数据转发的角色，客户端与目标服务器之间可以通过这个隧道来发送任何类型的数据，包括但不限于HTTP请求。
-func (t *httpProxyHandler) newTCPProxyRequestHandler() fasthttp.RequestHandler {
+func (t *httpProxyHandler) NewTCPProxyRequestHandler() fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		host := string(ctx.Request.Host())
 		srcConn := ctx.Conn()
@@ -109,8 +118,8 @@ func (t *httpProxyHandler) newTCPProxyRequestHandler() fasthttp.RequestHandler {
 	}
 }
 
-// MITM(Man-In-The-Middle)中间人攻击
-func (t *httpProxyHandler) newMITMProxyRequestHandler(cfg *HttpConfig, client *fasthttp.Client) fasthttp.RequestHandler {
+// NewMITMProxyRequestHandler MITM(Man-In-The-Middle)中间人攻击
+func (t *httpProxyHandler) NewMITMProxyRequestHandler(cfg *HttpConfig) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		host := string(ctx.Request.Host())
 		if host == "" {
@@ -128,7 +137,7 @@ func (t *httpProxyHandler) newMITMProxyRequestHandler(cfg *HttpConfig, client *f
 			returnError(ctx, err, `Create TLS Config Error`)
 			return
 		}
-		if err := NewHTTPServer(cfg, t.newHostProxyRequestHandler(client, true)).ServeConn(tls.Server(srcConn, tlsConfig)); err != nil {
+		if err := NewHTTPServer(cfg, t.NewHostProxyRequestHandler(true)).ServeConn(tls.Server(srcConn, tlsConfig)); err != nil {
 			returnError(ctx, err, `Handler TLS Connection Error`)
 			return
 		}
@@ -146,28 +155,17 @@ func setNoResponse(ctx *fasthttp.RequestCtx) {
 	ctx.Hijack(func(_ net.Conn) {})
 }
 
-func (t *httpProxyHandler) newHostProxyRequestHandler(client *fasthttp.Client, isTls bool) fasthttp.RequestHandler {
+func (t *httpProxyHandler) NewHostProxyRequestHandler(isTls bool) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
-		if isDownloadCertPem(ctx) {
+		if t.isDownloadCertPem(ctx) {
 			return
 		}
-		request := &ctx.Request
-		response := &ctx.Response
-		start := time.Now()
-		scheme := "http"
-		if isTls {
-			scheme = "https"
-		}
-		if err := client.Do(request, response); err != nil {
-			logs.CtxError(ctx, "[%s] [%s] [%s] %s err: %v", scheme, ctx.Request.Header.Method(), ctx.Request.Header.Host(), ctx.Request.Header.RequestURI(), err)
-			returnError(ctx, err, `Proxy Request Error`)
-			return
-		}
-		t.HttpRecorder.Record(ctx, request, response, &record.ExtraInfo{IsTLS: isTls, Start: start, Spend: time.Now().Sub(start), Src: ctx.RemoteAddr()})
+		ctx.SetUserValue("is_tls", isTls)
+		t.Handler(ctx)
 	}
 }
 
-func isDownloadCertPem(ctx *fasthttp.RequestCtx) bool {
+func (t *httpProxyHandler) isDownloadCertPem(ctx *fasthttp.RequestCtx) bool {
 	req := &ctx.Request
 	if bytes.Contains(req.Host(), []byte("devtool.mitm")) && bytes.Equal(req.RequestURI(), []byte("/cert/pem")) {
 		ctx.Response.SetBody(CA_CERT)

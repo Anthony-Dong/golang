@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	if err := proxy.NewProxy(":8080", proxy.NewHTTPProxyHandler(record.NewConsulStorage())).Run(); err != nil {
+	if err := proxy.NewProxy(":8080", proxy.NewHTTPProxyHandler(proxy.NewRecordHTTPHandler(record.NewConsulStorage()))).Run(); err != nil {
 		panic(err)
 	}
 }

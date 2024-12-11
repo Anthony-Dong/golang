@@ -233,3 +233,15 @@ func ReadDir(dirname string) ([]fs.DirEntry, error) {
 	sort.Slice(dirs, func(i, j int) bool { return dirs[i].Name() < dirs[j].Name() })
 	return dirs, nil
 }
+
+func ReadSomeLines(read io.Reader, reader func(index int, line string) bool) {
+	index := 0
+	_ = ReadLineByFunc(read, func(line string) error {
+		isOk := reader(index, line)
+		if !isOk {
+			return io.EOF
+		}
+		index = index + 1
+		return nil
+	})
+}

@@ -3,9 +3,11 @@ package thrift_codec
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"sort"
+	"unicode/utf8"
 
 	"github.com/anthony-dong/golang/pkg/utils"
 
@@ -129,6 +131,10 @@ func DecodeStruct(ctx context.Context, iprot thrift.TProtocol) (*FieldOrderMap, 
 	return result, nil
 }
 
+func isValidUTF8(s string) bool {
+	return utf8.ValidString(s)
+}
+
 func DecodeField(ctx context.Context, fieldType thrift.TType, iprot thrift.TProtocol) (interface{}, error) {
 	switch fieldType {
 	case thrift.BOOL:
@@ -148,7 +154,14 @@ func DecodeField(ctx context.Context, fieldType thrift.TType, iprot thrift.TProt
 	case thrift.I64:
 		return iprot.ReadI64()
 	case thrift.STRING:
-		return iprot.ReadString()
+		str, err := iprot.ReadString()
+		if err != nil {
+			return nil, err
+		}
+		if isValidUTF8(str) {
+			return str, nil
+		}
+		return base64.StdEncoding.EncodeToString([]byte(str)), nil
 	//case thrift.BINARY: // not support! 这里可以skip掉
 	//	return iprot.ReadBinary()
 	case thrift.MAP:

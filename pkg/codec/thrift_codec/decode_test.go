@@ -57,3 +57,9 @@ func TestFieldOrderMap(t *testing.T) {
 
 	t.Log(utils.ToJson(orderMap))
 }
+
+func TestIsUtf8(t *testing.T) {
+	if isValidUTF8(string([]byte{'\u0000'})) {
+		t.Log("success")
+	}
+}

@@ -7,8 +7,8 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"math/big"
+	"os"
 	"time"
 )
 
@@ -43,10 +43,10 @@ func main() {
 	pemKey := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
 
 	// -keyout key.pem -out cert.pem
-	if err := ioutil.WriteFile("key.pem", pemKey, 0644); err != nil {
+	if err := os.WriteFile("key.pem", pemKey, 0644); err != nil {
 		panic(err)
 	}
-	if err := ioutil.WriteFile("cert.pem", pemCert, 0644); err != nil {
+	if err := os.WriteFile("cert.pem", pemCert, 0644); err != nil {
 		panic(err)
 	}
 	fmt.Println("write \"key.pem\" \"cert.pem\" success. \n" +

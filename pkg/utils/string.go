@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
@@ -259,4 +260,18 @@ func PrettyJsonBytes(src []byte) []byte {
 		return src
 	}
 	return out.Bytes()
+}
+
+var spaceRgx = regexp.MustCompile(`\s+`)
+
+func SplitArgs(input string) []string {
+	split := spaceRgx.Split(input, -1)
+	result := make([]string, 0)
+	for _, elem := range split {
+		if strings.TrimSpace(elem) == "" {
+			continue
+		}
+		result = append(result, elem)
+	}
+	return result
 }

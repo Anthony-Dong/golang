@@ -21,9 +21,7 @@ func TestThriftClient(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	go func() {
-		server.Run()
-	}()
+	go server.Run()
 	defer server.Stop()
 	runTestClient(t, "a.b.c", addr)
 }
@@ -39,9 +37,6 @@ func runTestClient(t *testing.T, serviceName, addr string) {
 	methods := []string{"TestStruct", "TestVoid", "TestOnewayVoid", "TestList", "TestSet", "TestMap", "TestIntMap", "TestString"}
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			if method != "TestOnewayVoid" {
-				return
-			}
 			exampleCode, err := client.GetExampleCode(ctx, serviceName, nil, method)
 			if err != nil {
 				t.Fatal(err)

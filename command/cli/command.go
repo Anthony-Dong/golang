@@ -3,6 +3,9 @@ package cli
 import (
 	"context"
 
+	"github.com/anthony-dong/golang/command/diff"
+	"github.com/anthony-dong/golang/command/strace"
+
 	"github.com/anthony-dong/golang/command/_init"
 	"github.com/anthony-dong/golang/command/install"
 	"github.com/anthony-dong/golang/command/mock"
@@ -120,6 +123,12 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 		return nil, err
 	}
 	if err := command.AddCommand(cmd, install.NewCommand); err != nil {
+		return nil, err
+	}
+	if err := command.AddCommand(cmd, strace.NewCommand); err != nil {
+		return nil, err
+	}
+	if err := command.AddCommand(cmd, diff.NewCommand); err != nil {
 		return nil, err
 	}
 	return cmd, nil

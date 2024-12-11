@@ -15,9 +15,7 @@ func TestClient(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	go func() {
-		t.Log(server.Run())
-	}()
+	go server.Run()
 	defer server.Stop()
 
 	cc := apiservice.MustNewClient("a.b.c", client.WithHostPorts("localhost:10011"))
