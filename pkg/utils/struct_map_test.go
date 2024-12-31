@@ -2,6 +2,8 @@ package utils
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type TestStruct struct {
@@ -23,8 +25,7 @@ func TestNewStructMap(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(ToJson(structMap, true))
-
+	assert.Equal(t, ToJson(structMap), `{"name":"1","age":1,"Data":"4"}`)
 	structMap.Set("age", 2)
-	t.Log(ToJson(structMap, true))
+	assert.Equal(t, ToJson(structMap), `{"name":"1","age":2,"Data":"4"}`)
 }

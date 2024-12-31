@@ -8,10 +8,6 @@ import (
 	"github.com/anthony-dong/golang/pkg/orderedmap"
 )
 
-type StructMap struct {
-	kv orderedmap.OrderedMap
-}
-
 func NewStructMap(t interface{}, tag string) (*orderedmap.OrderedMap, error) {
 	value := reflect.ValueOf(t)
 	for value.Kind() == reflect.Ptr {
