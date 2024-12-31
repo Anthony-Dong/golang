@@ -33,6 +33,7 @@ require (
 require (
 	github.com/cloudwego/gopkg v0.1.2
 	github.com/golang/protobuf v1.5.2
+	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 )
 
 require (
@@ -40,7 +41,7 @@ require (
 	github.com/cloudwego/configmanager v0.2.2 // indirect
 	github.com/cloudwego/fastpb v0.0.5 // indirect
 	github.com/cloudwego/frugal v0.2.0 // indirect
-	github.com/cloudwego/netpoll v0.6.4 // indirect
+	github.com/cloudwego/netpoll v0.6.5
 )
 
 require (

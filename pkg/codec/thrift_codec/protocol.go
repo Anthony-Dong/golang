@@ -43,40 +43,6 @@ const (
 	FramedBinaryMeshHeader
 )
 
-func (p Protocol) String() string {
-	switch p {
-	case UnframedBinary:
-		return "UnframedBinary"
-	case UnframedCompact:
-		return "UnframedCompact"
-	case FramedBinary:
-		return "FramedBinary"
-	case FramedCompact:
-		return "FramedCompact"
-	case UnframedHeader:
-		return "UnframedHeader"
-	case FramedHeader:
-		return "FramedHeader"
-	case UnframedUnStrictBinary:
-		return "UnframedUnStrictBinary"
-	case FramedUnStrictBinary:
-		return "FramedUnStrictBinary"
-	case UnframedBinaryTTHeader:
-		return "UnframedBinaryTTHeader"
-	case FramedBinaryTTHeader:
-		return "FramedBinaryTTHeader"
-	case UnframedBinaryMeshHeader:
-		return "UnframedBinaryMeshHeader"
-	case FramedBinaryMeshHeader:
-		return "FramedBinaryMeshHeader"
-	}
-	return "Unknown"
-}
-
-func (p Protocol) MarshalText() (text []byte, err error) {
-	return []byte(p.String()), nil
-}
-
 type reader interface {
 	io.Reader
 	Peek(int) ([]byte, error)

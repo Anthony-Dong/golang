@@ -5,9 +5,11 @@ package apiservice
 import (
 	"context"
 	"errors"
-	api "github.com/anthony-dong/golang/pkg/rpc/kitex_demo/kitex_gen/api"
+
 	client "github.com/cloudwego/kitex/client"
 	kitex "github.com/cloudwego/kitex/pkg/serviceinfo"
+
+	api "github.com/anthony-dong/golang/pkg/rpc/kitex_demo/kitex_gen/api"
 )
 
 var errInvalidMessageType = errors.New("invalid message type for service method handler")

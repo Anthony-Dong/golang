@@ -21,6 +21,7 @@ Compile: clang++ -Wall -std=c++17 -O0 -g -I/usr/local/include -c ./cpp/fmt.cpp -
 Link: clang++ -o output/fmt output/fmt.a -L/usr/local/lib -lspdlog -lgtest_main -lgtest
 Run: output/fmt
 */
+// CXX:xx
 
 type Tools struct {
 	CXX    string `json:"CXX,omitempty" yaml:"CXX,omitempty"`
@@ -39,6 +40,20 @@ type Tools struct {
 
 	fileBuildArgs utils.SyncMap[string, *buildAndLink]
 	objLinkArgs   utils.SyncMap[string, *buildAndLink]
+}
+
+func (t *Tools) GetCXX() string {
+	if t.CXX == "" {
+		return CXX()
+	}
+	return t.CXX
+}
+
+func (t *Tools) GetCC() string {
+	if t.CC == "" {
+		return CC()
+	}
+	return t.CC
 }
 
 const BuildTypeDebug = "debug"
@@ -79,14 +94,14 @@ func (t *Tools) readFileArgs(ctx context.Context, file string) (*buildAndLink, e
 
 func (t *Tools) build(ctx context.Context, src string) (string, error) {
 	object := t.NewObjectName(src)
-	args := t.BuildArgs
-
 	// set custom build args
 	customArgs, err := t.readFileArgs(ctx, src)
 	if err != nil {
 		return "", err
 	}
 	t.objLinkArgs.Store(object, customArgs)
+
+	args := t.BuildArgs
 	args = append(args, customArgs.buildArgs...)
 
 	if !t.hasArgs(args, "-W") {
@@ -111,7 +126,7 @@ func (t *Tools) build(ctx context.Context, src string) (string, error) {
 	}
 	args = append(args, "-c", src)
 	args = append(args, "-o", object)
-	command := exec.Command(t.CXX, args...)
+	command := exec.Command(t.GetCXX(), args...)
 	command.Dir = t.Pwd
 	logs.CtxDebug(ctx, "Build: %s", utils.PrettyCmd(command))
 	if err := utils.RunCommand(command); err != nil {
@@ -148,7 +163,7 @@ func (t *Tools) linkBinary(ctx context.Context, output string) error {
 			args = append(args, value.linkArgs...)
 		}
 	}
-	command := exec.Command(t.CXX, args...)
+	command := exec.Command(t.GetCXX(), args...)
 	command.Dir = t.Pwd
 	logs.CtxDebug(ctx, "Link: %s", utils.PrettyCmd(command))
 	return utils.RunCommand(command)

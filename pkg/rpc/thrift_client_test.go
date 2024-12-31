@@ -5,10 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/anthony-dong/golang/pkg/rpc/kitex_demo/handler"
-	"github.com/anthony-dong/golang/pkg/utils"
 	kitex_client "github.com/cloudwego/kitex/client"
 	"github.com/cloudwego/kitex/transport"
+
+	"github.com/anthony-dong/golang/pkg/rpc/kitex_demo/handler"
+	"github.com/anthony-dong/golang/pkg/utils"
 )
 
 func GetTestIDLPath() string {

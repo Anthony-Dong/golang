@@ -6,11 +6,12 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/spf13/cobra"
+	"github.com/tidwall/gjson"
+
 	"github.com/anthony-dong/golang/command"
 	"github.com/anthony-dong/golang/pkg/diff"
 	"github.com/anthony-dong/golang/pkg/utils"
-	"github.com/spf13/cobra"
-	"github.com/tidwall/gjson"
 )
 
 func NewCommand() (*cobra.Command, error) {

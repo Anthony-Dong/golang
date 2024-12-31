@@ -3,7 +3,10 @@ package thrift_codec
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"testing"
+
+	"github.com/anthony-dong/golang/pkg/codec/thrift_codec/kitex"
 
 	"github.com/apache/thrift/lib/go/thrift"
 
@@ -62,4 +65,43 @@ func TestIsUtf8(t *testing.T) {
 	if isValidUTF8(string([]byte{'\u0000'})) {
 		t.Log("success")
 	}
+}
+
+func TestThriftMessage_Marshal(t *testing.T) {
+	payload := NewFieldOrderMap(10)
+	payload.Set(NewField(1, thrift.LIST), []interface{}{
+		"1", "2", "3", "4",
+	})
+	payload.Set(NewField(2, thrift.MAP), map[string]interface{}{
+		"1": 1,
+		"2": 2,
+	})
+	payload.Set(NewField(3, thrift.STRING), "123")
+
+	info := kitex.NewMetaInfo()
+	info.IntInfo[kitex.FromCluster] = "1"
+	info.StrInfo["1"] = "1"
+	msg := ThriftMessage{
+		Method:      "Pack",
+		SeqId:       1,
+		Protocol:    FramedBinary,
+		MessageType: CALL,
+		Payload:     payload,
+		Exception: &ThriftException{
+			TypeId:  1,
+			Message: "error",
+		},
+		MetaInfo: info,
+	}
+	marshal, err := json.Marshal(&msg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(marshal))
+
+	v := ThriftMessage{}
+	if err := json.Unmarshal(marshal, &v); err != nil {
+		t.Fatal(err)
+	}
+	t.Log(v)
 }

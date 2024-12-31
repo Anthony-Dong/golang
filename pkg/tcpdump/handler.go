@@ -13,7 +13,7 @@ import (
 	"github.com/anthony-dong/golang/pkg/bufutils"
 )
 
-type Decoder func(ctx *Context, reader SourceReader) error
+type Decoder func(ctx *Context, reader SourceReader, _ Packet) error
 
 type SourceReader interface {
 	io.Reader
@@ -34,6 +34,13 @@ type Context struct {
 	index       int
 	decoderName []string
 	decoder     []Decoder
+}
+
+func (c *Context) GetContext() context.Context {
+	if c.Context == nil {
+		return context.Background()
+	}
+	return c.Context
 }
 
 type ContextConfig struct {
@@ -167,13 +174,13 @@ func (c *Context) HandlerPacket(p Packet) {
 		payload = append(payload, p.Data...)
 		c.packets[key][p.ACK] = payload
 
-		c.decode(p.Data, payload, func() {
+		c.decode(p, payload, func() {
 			delete(c.packets[key], p.ACK)
 		})
 	}
 }
 
-func (c *Context) decode(cur []byte, payload []byte, success func()) {
+func (c *Context) decode(p Packet, payload []byte, success func()) {
 	c.index = 0
 	for {
 		if c.index > len(c.decoder)-1 { // end
@@ -185,7 +192,7 @@ func (c *Context) decode(cur []byte, payload []byte, success func()) {
 			bufutils.ResetBufReader(reader)
 			bufutils.ResetBuffer(buffer)
 		}
-		if err := c.decoder[c.index](c, reader); err != nil {
+		if err := c.decoder[c.index](c, reader, p); err != nil {
 			clean()
 			c.Verbose("[%s] %v", c.decoderName[c.index], err)
 			c.index = c.index + 1
@@ -195,7 +202,7 @@ func (c *Context) decode(cur []byte, payload []byte, success func()) {
 		success()
 		return
 	}
-	c.Dump(cur)
+	c.Dump(p.Data)
 }
 
 // IpPort 支持 ipv6:port, [ipv6]:port, ip:port

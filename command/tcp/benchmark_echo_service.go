@@ -93,7 +93,7 @@ func benchmark(ctx context.Context, addr string, maxConn int, concurrent int, wr
 			defer conn.Close()
 			count := 0
 			for {
-				if time.Now().After(stopTime) {
+				if time.Since(stopTime) > 0 {
 					return nil
 				}
 				count = count + 1

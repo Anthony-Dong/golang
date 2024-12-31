@@ -4,9 +4,11 @@ package apiservice
 
 import (
 	"context"
-	api "github.com/anthony-dong/golang/pkg/rpc/kitex_demo/kitex_gen/api"
+
 	client "github.com/cloudwego/kitex/client"
 	callopt "github.com/cloudwego/kitex/client/callopt"
+
+	api "github.com/anthony-dong/golang/pkg/rpc/kitex_demo/kitex_gen/api"
 )
 
 // Client is designed to provide IDL-compatible methods with call-option parameter for kitex framework.

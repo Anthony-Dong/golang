@@ -86,19 +86,6 @@ func NewCommand(configProvider func() *command.RunTaskConfig) (*cobra.Command, e
 			logs.Info("file: %s\n%s", filename, utils.ToYaml(configs))
 			for index, task := range configs {
 				taskId := fmt.Sprintf("[task-%d]", index)
-
-				if task.Type == TaskTypeEnv {
-					//kv, err := helper.NewTemplateVars(task.Env)
-					//if err != nil {
-					//	return err
-					//}
-					//for k, v := range kv {
-					//	if err := os.Setenv(k, v); err != nil {
-					//		return err
-					//	}
-					//}
-				}
-
 				run := exec.Command(task.Cmd, task.Args...)
 				run.Dir = task.Dir
 				run.Env = append(os.Environ(), task.Env...)
@@ -164,8 +151,6 @@ func (r *TaskRunner) NewTemplateVars(slice []string) (map[string]string, error) 
 
 type TaskType string
 
-const TaskTypeEnv = "env"
-
 type TaskConfig struct {
 	Name    string            `json:"name,omitempty" yaml:"name,omitempty"`       // 任务名称
 	Cmd     string            `json:"cmd,omitempty" yaml:"cmd,omitempty"`         // 命令名称，例如 ls/go/gcc
@@ -176,8 +161,6 @@ type TaskConfig struct {
 	Run     string            `json:"run,omitempty" yaml:"run,omitempty"`         // 运行脚本，最终会替换成一个 shell命令
 	Vars    map[string]string `json:"vars,omitempty" yaml:"vars,omitempty"`       // 模版变量
 	Daemon  bool              `json:"daemon,omitempty" yaml:"daemon,omitempty"`   // 是否为后台任务
-
-	Type TaskType `json:"type,omitempty" yaml:"type,omitempty"` // Env
 }
 
 func (c *TaskConfig) name() string {

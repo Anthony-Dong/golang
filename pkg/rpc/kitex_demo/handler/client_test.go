@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/cloudwego/kitex/client"
+
 	"github.com/anthony-dong/golang/pkg/rpc/kitex_demo/kitex_gen/api"
 	"github.com/anthony-dong/golang/pkg/rpc/kitex_demo/kitex_gen/api/apiservice"
 	"github.com/anthony-dong/golang/pkg/utils"
-	"github.com/cloudwego/kitex/client"
 )
 
 func TestClient(t *testing.T) {

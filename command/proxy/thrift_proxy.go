@@ -6,11 +6,12 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/spf13/cobra"
+
 	"github.com/anthony-dong/golang/command"
 	"github.com/anthony-dong/golang/pkg/logs"
 	"github.com/anthony-dong/golang/pkg/rpc"
 	"github.com/anthony-dong/golang/pkg/utils"
-	"github.com/spf13/cobra"
 )
 
 func NewThriftProxyCommand(cfg func() *command.CurlConfig) (*cobra.Command, error) {

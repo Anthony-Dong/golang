@@ -3,9 +3,10 @@ package proxy
 import (
 	"time"
 
+	"github.com/valyala/fasthttp"
+
 	"github.com/anthony-dong/golang/pkg/logs"
 	"github.com/anthony-dong/golang/pkg/proxy/record"
-	"github.com/valyala/fasthttp"
 )
 
 func NewRecordHTTPHandler(storage record.Storage) fasthttp.RequestHandler {

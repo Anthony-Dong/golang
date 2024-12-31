@@ -6,8 +6,9 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
-	thrift "github.com/cloudwego/kitex/pkg/protocol/bthrift/apache"
 	"strings"
+
+	thrift "github.com/cloudwego/kitex/pkg/protocol/bthrift/apache"
 )
 
 type Status int64

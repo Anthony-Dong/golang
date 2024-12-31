@@ -59,7 +59,7 @@ func isHttpRequest(ctx context.Context, reader SourceReader) (bool, error) {
 }
 
 func NewHTTP1Decoder() Decoder {
-	return func(ctx *Context, reader SourceReader) error {
+	return func(ctx *Context, reader SourceReader, _ Packet) error {
 		crlfNum := 0 // /r/n 换行符， http协议分割符号本质上是换行符！所以清除头部的换行符(假如存在这种case)
 		for {
 			peek, err := reader.Peek(2 + crlfNum)

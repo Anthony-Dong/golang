@@ -5,10 +5,12 @@ package api
 import (
 	"context"
 	"fmt"
+	"strings"
+
+	thrift "github.com/cloudwego/kitex/pkg/protocol/bthrift/apache"
+
 	"github.com/anthony-dong/golang/pkg/rpc/kitex_demo/kitex_gen/base"
 	"github.com/anthony-dong/golang/pkg/rpc/kitex_demo/kitex_gen/common"
-	thrift "github.com/cloudwego/kitex/pkg/protocol/bthrift/apache"
-	"strings"
 )
 
 type Request struct {

@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	command, err := tcpdump.NewCommand()
+	command, err := tcpdump.NewCommand(tcpdump.DefaultDecoders)
 	if err != nil {
 		exitError(err)
 	}

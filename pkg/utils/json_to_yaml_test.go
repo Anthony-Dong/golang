@@ -96,3 +96,108 @@ func TestYamlNode(t *testing.T) {
 	}
 	t.Log(string(output))
 }
+func Test_JsonToYaml_EmptyObject(t *testing.T) {
+	jsonData := `{}`
+
+	yamlData, err := JsonToYaml([]byte(jsonData))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(yamlData))
+
+	output, err := YamlToJson(yamlData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(output))
+
+	assert.Equal(t, rmSpace(jsonData), rmSpace(string(output)))
+}
+
+func Test_JsonToYaml_EmptyArray(t *testing.T) {
+	jsonData := `[]`
+
+	yamlData, err := JsonToYaml([]byte(jsonData))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(yamlData))
+
+	output, err := YamlToJson(yamlData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(output))
+
+	assert.Equal(t, rmSpace(jsonData), rmSpace(string(output)))
+}
+
+func Test_JsonToYaml_NestedObject(t *testing.T) {
+	jsonData := `
+{
+	"level1": {
+		"level2": {
+			"level3": {
+				"key": "value"
+			}
+		}
+	}
+}`
+
+	yamlData, err := JsonToYaml([]byte(jsonData))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(yamlData))
+
+	output, err := YamlToJson(yamlData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(output))
+
+	assert.Equal(t, rmSpace(jsonData), rmSpace(string(output)))
+}
+
+func Test_JsonToYaml_SpecialCharacters(t *testing.T) {
+	jsonData := `
+{
+	"special": "!@#$%^&*()_+-=[]{}|;':\",./<>?"
+}`
+
+	yamlData, err := JsonToYaml([]byte(jsonData))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(yamlData))
+
+	output, err := YamlToJson(yamlData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(output))
+
+	assert.Equal(t, rmSpace(jsonData), rmSpace(string(output)))
+}
+
+func Test_JsonToYaml_BooleanValues(t *testing.T) {
+	jsonData := `
+{
+	"trueValue": true,
+	"falseValue": false
+}`
+
+	yamlData, err := JsonToYaml([]byte(jsonData))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(yamlData))
+
+	output, err := YamlToJson(yamlData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(output))
+
+	assert.Equal(t, rmSpace(jsonData), rmSpace(string(output)))
+}
