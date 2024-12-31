@@ -7,10 +7,11 @@ import (
 	"io"
 	"net"
 
-	"github.com/anthony-dong/golang/pkg/codec/thrift_codec"
-	"github.com/anthony-dong/golang/pkg/logs"
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/pkg/generic/descriptor"
+
+	"github.com/anthony-dong/golang/pkg/codec/thrift_codec"
+	"github.com/anthony-dong/golang/pkg/logs"
 )
 
 type thriftServer struct {

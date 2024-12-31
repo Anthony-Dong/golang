@@ -3,8 +3,9 @@ package handler
 import (
 	"net"
 
-	api "github.com/anthony-dong/golang/pkg/rpc/kitex_demo/kitex_gen/api/apiservice"
 	"github.com/cloudwego/kitex/server"
+
+	api "github.com/anthony-dong/golang/pkg/rpc/kitex_demo/kitex_gen/api/apiservice"
 )
 
 func NewServer(address string) (server.Server, error) {

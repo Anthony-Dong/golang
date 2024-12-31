@@ -11,6 +11,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// JsonToYaml converts a JSON byte slice to a YAML byte slice.
+// It takes a JSON input as a byte slice and returns the converted YAML output as a byte slice.
+// If an error occurs during the conversion, it returns the error.
+//
+// Parameters:
+// - input: []byte - The JSON input to be converted.
+//
+// Returns:
+// - output: []byte - The converted YAML output.
+// - err: error - Any error encountered during the conversion.
 func JsonToYaml(input []byte) (output []byte, err error) {
 	yamlNode := &yaml.Node{}
 	if err := toYAMLNode(yamlNode, gjson.ParseBytes(input)); err != nil {

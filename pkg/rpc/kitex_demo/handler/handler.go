@@ -3,11 +3,12 @@ package handler
 import (
 	"context"
 
+	"github.com/bytedance/gopkg/cloud/metainfo"
+
 	"github.com/anthony-dong/golang/pkg/logs"
 	api "github.com/anthony-dong/golang/pkg/rpc/kitex_demo/kitex_gen/api"
 	"github.com/anthony-dong/golang/pkg/rpc/kitex_demo/kitex_gen/base"
 	"github.com/anthony-dong/golang/pkg/utils"
-	"github.com/bytedance/gopkg/cloud/metainfo"
 )
 
 var _ api.APIService = (*APIServiceImpl)(nil)

@@ -26,19 +26,23 @@ func NewRpcRequest(urlStr string, headers []string, body string) (*Request, erro
 			return NewKV(utils.SplitKV(header, ":"))
 		}),
 		Addr: query.Get("addr"),
-		Tag: utils.FlatMapFromMap(query, func(key string, values []string) []*KV {
-			if key == "addr" {
-				return nil
-			}
-			ret := make([]*KV, 0, len(values))
-			for _, value := range values {
-				ret = append(ret, NewKV(key, value))
-			}
-			return ret
-		}),
+		Tag:  GetTagFromQuery(query, []string{"addr"}),
 	}
 	if req.ServiceName == "" {
 		return nil, fmt.Errorf(`invalid rpc service name. request url like`)
 	}
 	return req, err
+}
+
+func GetTagFromQuery(query url.Values, slip []string) []*KV {
+	return utils.FlatMapFromMap(query, func(key string, values []string) []*KV {
+		if utils.Contains(slip, key) {
+			return nil
+		}
+		ret := make([]*KV, 0, len(values))
+		for _, value := range values {
+			ret = append(ret, NewKV(key, value))
+		}
+		return ret
+	})
 }

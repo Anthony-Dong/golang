@@ -15,7 +15,7 @@ import (
 	"github.com/anthony-dong/golang/pkg/utils"
 )
 
-func NewCommand() (*cobra.Command, error) {
+func NewCommand(decoders map[string]tcpdump.Decoder) (*cobra.Command, error) {
 	var (
 		cfg      = tcpdump.NewDefaultConfig()
 		filename string
@@ -26,7 +26,7 @@ func NewCommand() (*cobra.Command, error) {
 		Long:    `decode tcpdump file, help doc: https://github.com/anthony-dong/golang/tree/master/cli/tcpdump_tools`,
 		Example: `  tcpdump 'port 8080' -X -l -n | tcpdump_tools`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd.Context(), filename, cfg)
+			return Run(cmd.Context(), filename, cfg, decoders)
 		},
 	}
 	cmd.Flags().StringVarP(&filename, "file", "r", "", "The packets file, eg: tcpdump_xxx_file.pcap.")
@@ -36,11 +36,17 @@ func NewCommand() (*cobra.Command, error) {
 	return cmd, nil
 }
 
-func run(ctx context.Context, filename string, cfg tcpdump.ContextConfig) error {
+var DefaultDecoders = map[string]tcpdump.Decoder{
+	"Thrift":  tcpdump.NewThriftDecoder(tcpdump.NewThriftMessageParser()),
+	"HTTP1.X": tcpdump.NewHTTP1Decoder(),
+}
+
+func Run(ctx context.Context, filename string, cfg tcpdump.ContextConfig, decoders map[string]tcpdump.Decoder) error {
 	decoder := tcpdump.NewCtx(ctx, cfg)
 	options := NewDecodeOptions()
-	decoder.AddDecoder("HTTP1.X", tcpdump.NewHTTP1Decoder())
-	decoder.AddDecoder("Thrift", tcpdump.NewThriftDecoder())
+	for k, v := range decoders {
+		decoder.AddDecoder(k, v)
+	}
 	var source PacketSource
 	if utils.CheckStdInFromPiped() {
 		source = NewConsulSource(os.Stdin, options)

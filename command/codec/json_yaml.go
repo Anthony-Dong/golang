@@ -4,8 +4,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/anthony-dong/golang/pkg/utils"
 	"github.com/spf13/cobra"
+
+	"github.com/anthony-dong/golang/pkg/utils"
 )
 
 func NewJson2YamlCmd() (*cobra.Command, error) {

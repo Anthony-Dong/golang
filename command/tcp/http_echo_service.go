@@ -18,6 +18,7 @@ func NewHTTPEchoServiceCommand() (*cobra.Command, error) {
 		Use:   "http_echo_service",
 		Short: "create a http echo service",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			logs.Info("listening on %s", addr)
 			return newHTTPEchoService(cmd.Context(), addr)
 		},
 	}

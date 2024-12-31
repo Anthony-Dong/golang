@@ -14,8 +14,6 @@ func TestNewThriftServer(t *testing.T) {
 	}
 	server := NewThriftServer(desc, addr)
 	defer server.Close()
-	go func() {
-		t.Log(server.Run())
-	}()
+	go server.Run()
 	runTestClient(t, "a.b.c", addr)
 }

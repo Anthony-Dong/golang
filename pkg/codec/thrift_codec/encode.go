@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/anthony-dong/golang/pkg/utils"
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/cloudwego/kitex/pkg/generic/descriptor"
 	"github.com/iancoleman/orderedmap"
+
+	"github.com/anthony-dong/golang/pkg/utils"
 )
 
 func EncodeMessage(oprot thrift.TProtocol, desc *descriptor.TypeDescriptor, data interface{}) error {

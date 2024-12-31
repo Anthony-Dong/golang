@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/cloudwego/kitex/client"
+
 	"github.com/anthony-dong/golang/pkg/rpc/kitex_demo/kitex_gen/api"
 	"github.com/anthony-dong/golang/pkg/rpc/kitex_demo/kitex_gen/api/apiservice"
 	"github.com/anthony-dong/golang/pkg/utils"
-	"github.com/cloudwego/kitex/client"
 )
 
 func TestClient(t *testing.T) {
@@ -15,9 +16,7 @@ func TestClient(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	go func() {
-		t.Log(server.Run())
-	}()
+	go server.Run()
 	defer server.Stop()
 
 	cc := apiservice.MustNewClient("a.b.c", client.WithHostPorts("localhost:10011"))

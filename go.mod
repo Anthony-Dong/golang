@@ -33,6 +33,7 @@ require (
 require (
 	github.com/cloudwego/gopkg v0.1.2
 	github.com/golang/protobuf v1.5.2
+	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 )
 
 require (
@@ -40,7 +41,7 @@ require (
 	github.com/cloudwego/configmanager v0.2.2 // indirect
 	github.com/cloudwego/fastpb v0.0.5 // indirect
 	github.com/cloudwego/frugal v0.2.0 // indirect
-	github.com/cloudwego/netpoll v0.6.4 // indirect
+	github.com/cloudwego/netpoll v0.6.5
 )
 
 require (
@@ -62,7 +63,7 @@ require (
 	github.com/klauspost/compress v1.17.6 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
 	github.com/mattn/go-colorable v0.1.9 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/gls v0.0.0-20220109145502-612d0167dce5 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
@@ -74,7 +75,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	golang.org/x/arch v0.2.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto v0.0.0-20210513213006-bf773b8c8384 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect

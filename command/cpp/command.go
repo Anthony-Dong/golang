@@ -10,11 +10,7 @@ import (
 )
 
 func NewCommand() (*cobra.Command, error) {
-	tools := Tools{
-		Pwd: utils.GetPwd(),
-		CC:  CC(),
-		CXX: CXX(),
-	}
+	tools := Tools{Pwd: utils.GetPwd()}
 	configFile := ""
 	isRun := false
 	linkType := "binary"
@@ -26,7 +22,7 @@ func NewCommand() (*cobra.Command, error) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			if configFile != "" {
-				if err := utils.UnmarshalFromFile(configFile, &tools); err != nil {
+				if err := ReadToolConfigFromFile(configFile, &tools); err != nil {
 					return err
 				}
 			}

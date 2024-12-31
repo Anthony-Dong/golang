@@ -37,7 +37,8 @@ type MetaInfo struct {
 }
 
 var (
-	_intKeyMap = map[uint16]string{
+	_revertIntKeyMap = map[string]uint16{}
+	_intKeyMap       = map[uint16]string{
 		MeshVersion:     "MeshVersion",
 		TransportType:   "TransportType",
 		LogID:           "LogID",
@@ -74,6 +75,12 @@ var (
 	}
 )
 
+func init() {
+	for k, v := range _intKeyMap {
+		_revertIntKeyMap[v] = k
+	}
+}
+
 func getMsgType(v string) string {
 	if r, isExist := _msgType[v]; isExist {
 		return r
@@ -89,6 +96,27 @@ func getIntKey(k uint16) string {
 
 func (m MetaInfo) MarshalJSON() (text []byte, err error) {
 	return []byte(m.String()), nil
+}
+
+func (m *MetaInfo) UnmarshalJSON(text []byte) (err error) {
+	result := make(map[string]map[string]string, 0)
+	if err := json.Unmarshal(text, &result); err != nil {
+		return err
+	}
+	m.StrInfo = result["StrInfo"]
+	m.IntInfo = make(map[uint16]string, 0)
+	for k, v := range result["IntInfo"] {
+		if realKey, isExist := _revertIntKeyMap[k]; isExist {
+			m.IntInfo[realKey] = v
+			continue
+		}
+		realKey, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return err
+		}
+		m.IntInfo[uint16(realKey)] = v
+	}
+	return nil
 }
 
 func (m MetaInfo) String() string {

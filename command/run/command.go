@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -150,6 +149,8 @@ func (r *TaskRunner) NewTemplateVars(slice []string) (map[string]string, error) 
 	return kv, nil
 }
 
+type TaskType string
+
 type TaskConfig struct {
 	Name    string            `json:"name,omitempty" yaml:"name,omitempty"`       // 任务名称
 	Cmd     string            `json:"cmd,omitempty" yaml:"cmd,omitempty"`         // 命令名称，例如 ls/go/gcc
@@ -253,7 +254,7 @@ func (*TaskRunner) ParseTaskConfig(content []byte) ([]*TaskConfig, error) {
 }
 
 func (r *TaskRunner) ParseTaskConfigFile(filename string) ([]*TaskConfig, error) {
-	file, err := ioutil.ReadFile(filename)
+	file, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}

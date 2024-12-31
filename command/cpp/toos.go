@@ -21,6 +21,7 @@ Compile: clang++ -Wall -std=c++17 -O0 -g -I/usr/local/include -c ./cpp/fmt.cpp -
 Link: clang++ -o output/fmt output/fmt.a -L/usr/local/lib -lspdlog -lgtest_main -lgtest
 Run: output/fmt
 */
+// CXX:xx
 
 type Tools struct {
 	CXX    string `json:"CXX,omitempty" yaml:"CXX,omitempty"`
@@ -36,6 +37,23 @@ type Tools struct {
 	BuildType string   `json:"BuildType,omitempty" yaml:"BuildType,omitempty"` // 构建类型
 
 	objects []string
+
+	fileBuildArgs utils.SyncMap[string, *buildAndLink]
+	objLinkArgs   utils.SyncMap[string, *buildAndLink]
+}
+
+func (t *Tools) GetCXX() string {
+	if t.CXX == "" {
+		return CXX()
+	}
+	return t.CXX
+}
+
+func (t *Tools) GetCC() string {
+	if t.CC == "" {
+		return CC()
+	}
+	return t.CC
 }
 
 const BuildTypeDebug = "debug"
@@ -63,8 +81,29 @@ func (t *Tools) Build(ctx context.Context, thread int) error {
 	return wg.Wait()
 }
 
+func (t *Tools) readFileArgs(ctx context.Context, file string) (*buildAndLink, error) {
+	return t.fileBuildArgs.LoadOrStoreFunc(file, func() (*buildAndLink, error) {
+		args, err := readFileArgs(file)
+		if err != nil {
+			return nil, err
+		}
+		logs.CtxDebug(ctx, "file [%s] custom args: %s", file, utils.ToJson(args))
+		return args, nil
+	})
+}
+
 func (t *Tools) build(ctx context.Context, src string) (string, error) {
+	object := t.NewObjectName(src)
+	// set custom build args
+	customArgs, err := t.readFileArgs(ctx, src)
+	if err != nil {
+		return "", err
+	}
+	t.objLinkArgs.Store(object, customArgs)
+
 	args := t.BuildArgs
+	args = append(args, customArgs.buildArgs...)
+
 	if !t.hasArgs(args, "-W") {
 		args = append(args, "-Wall")
 	}
@@ -85,10 +124,9 @@ func (t *Tools) build(ctx context.Context, src string) (string, error) {
 			args = append(args, "-g") // Generate source-level debug information
 		}
 	}
-	object := t.NewObjectName(src)
 	args = append(args, "-c", src)
 	args = append(args, "-o", object)
-	command := exec.Command(t.CXX, args...)
+	command := exec.Command(t.GetCXX(), args...)
 	command.Dir = t.Pwd
 	logs.CtxDebug(ctx, "Build: %s", utils.PrettyCmd(command))
 	if err := utils.RunCommand(command); err != nil {
@@ -119,7 +157,13 @@ func (t *Tools) linkBinary(ctx context.Context, output string) error {
 		args = append(args, object)
 	}
 	args = append(args, t.LinkArgs...)
-	command := exec.Command(t.CXX, args...)
+	// custom link args
+	for _, object := range t.objects {
+		if value := t.objLinkArgs.Get(object); value != nil {
+			args = append(args, value.linkArgs...)
+		}
+	}
+	command := exec.Command(t.GetCXX(), args...)
 	command.Dir = t.Pwd
 	logs.CtxDebug(ctx, "Link: %s", utils.PrettyCmd(command))
 	return utils.RunCommand(command)
@@ -132,6 +176,11 @@ func (t *Tools) linkLibrary(ctx context.Context, output string) error {
 		args = append(args, "-v")
 	}
 	args = append(args, t.LinkArgs...)
+	for _, object := range t.objects {
+		if value := t.objLinkArgs.Get(object); value != nil {
+			args = append(args, value.linkArgs...)
+		}
+	}
 	args = append(args, output)
 	for _, object := range t.objects {
 		args = append(args, object)

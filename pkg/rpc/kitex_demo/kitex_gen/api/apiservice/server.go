@@ -2,8 +2,9 @@
 package apiservice
 
 import (
-	api "github.com/anthony-dong/golang/pkg/rpc/kitex_demo/kitex_gen/api"
 	server "github.com/cloudwego/kitex/server"
+
+	api "github.com/anthony-dong/golang/pkg/rpc/kitex_demo/kitex_gen/api"
 )
 
 // NewServer creates a server.Server with the given handler and options.

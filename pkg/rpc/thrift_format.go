@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/anthony-dong/golang/pkg/utils"
 	"github.com/cloudwego/kitex/pkg/generic/descriptor"
 	"github.com/iancoleman/orderedmap"
+
+	"github.com/anthony-dong/golang/pkg/utils"
 )
 
 func formatStruct(desc *descriptor.StructDescriptor, data interface{}) (interface{}, error) {

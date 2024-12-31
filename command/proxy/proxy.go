@@ -50,9 +50,8 @@ func newStorage(output string) (record.Storage, error) {
 
 func NewHTTPCommand() (*cobra.Command, error) {
 	listenAddr := ""
-	dialAddr := ""
 	cmd := &cobra.Command{
-		Use:   "proxy",
+		Use:   "http",
 		Short: `HTTP/HTTPS proxy tool`,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			port := ""
@@ -69,7 +68,7 @@ export https_proxy=http://localhost:%s
 3. sudo update-ca-certificates
 # 注意: 请初始化后再使用才能生效 ....
 `, port, port, port)
-			return proxy.NewProxy(listenAddr, proxy.NewThriftHandler(dialAddr, record.NewConsulStorage())).Run()
+			return proxy.NewProxy(listenAddr, proxy.NewHTTPProxyHandler(proxy.NewRecordHTTPHandler(record.NewConsulStorage()))).Run()
 		},
 	}
 	cmd.Flags().StringVarP(&listenAddr, "listen", "l", ":8080", "Listen address")
@@ -80,7 +79,7 @@ func NewThriftCommand() (*cobra.Command, error) {
 	listenAddr := ""
 	dialAddr := ""
 	cmd := &cobra.Command{
-		Use:   "proxy",
+		Use:   "thrift",
 		Short: `Thrift proxy tool`,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			return proxy.NewProxy(listenAddr, proxy.NewThriftHandler(dialAddr, record.NewConsulStorage())).Run()
