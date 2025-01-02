@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -118,7 +117,7 @@ func (c *HostClient) doRequest(ctx context.Context, method string, path string, 
 	}
 	defer response.Body.Close()
 	log.KV("http_code", response.StatusCode)
-	respBody, err := ioutil.ReadAll(response.Body)
+	respBody, err := io.ReadAll(response.Body)
 	if err != nil {
 		return fmt.Errorf(`read response body find err: %v. http code: %d`, err, response.StatusCode)
 	}

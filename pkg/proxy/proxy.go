@@ -34,6 +34,7 @@ func (p *Proxy) Run() error {
 	if err != nil {
 		return err
 	}
+	logs.Info("proxy listen addr: %s", listen.Addr())
 	retryNum := 0
 	for {
 		conn, err := listen.Accept()

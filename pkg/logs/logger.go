@@ -1,8 +1,11 @@
 package logs
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -14,16 +17,26 @@ import (
 	"github.com/fatih/color"
 )
 
+const LogIDKey = "LOG_ID"
+
 var defaultLogLevel Level = LevelInfo
-var defaultLogFlag = LogFlagPrefix | LogFlagColor | LogFlagTime
-var print func(output string) = func(output string) {
-	fmt.Print(output)
+var defaultLogFlag = LogFlagPrefix | LogFlagColor | LogFlagTime | LogFlagLogID
+
+var writer io.Writer = os.Stdout
+
+func SetWriter(w io.Writer) {
+	writer = w
+}
+
+func SetPrinterStdError() {
+	writer = os.Stderr
 }
 
 const LogFlagPrefix = 1 << 0
 const LogFlagColor = 1 << 1
 const LogFlagTime = 1 << 2
 const LogFlagCaller = 1 << 3
+const LogFlagLogID = 1 << 4
 
 var _levelColor = map[Level]func(format string, a ...interface{}) string{
 	LevelDebug:  color.HiBlueString,
@@ -35,16 +48,6 @@ var _levelColor = map[Level]func(format string, a ...interface{}) string{
 
 func SetLevel(level Level) {
 	defaultLogLevel = level
-}
-
-func SetPrinter(printer func(output string)) {
-	print = printer
-}
-
-func SetPrinterStdError() {
-	print = func(output string) {
-		fmt.Fprint(os.Stderr, output)
-	}
 }
 
 func SetLevelString(level string) {
@@ -146,15 +149,29 @@ func Error(format string, v ...interface{}) {
 	logf(context.Background(), defaultLogFlag, LevelError, 2, format, v...)
 }
 
-func logf(_ context.Context, flag int, level Level, cl int, format string, v ...interface{}) {
+func GetLogId(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	value, _ := ctx.Value(LogIDKey).(string)
+	return value
+}
+
+func CtxWithLogID(ctx context.Context, id string) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return context.WithValue(ctx, LogIDKey, id)
+}
+
+func logf(ctx context.Context, flag int, level Level, cl int, format string, v ...interface{}) {
 	if level < defaultLogLevel {
 		return
 	}
-	if print == nil {
+	if writer == nil {
 		return
 	}
-	out := strings.Builder{}
-
+	out := bytes.Buffer{}
 	if flag&LogFlagPrefix == LogFlagPrefix {
 		switch level {
 		case LevelDebug:
@@ -171,6 +188,15 @@ func logf(_ context.Context, flag int, level Level, cl int, format string, v ...
 			out.WriteString("[-] ")
 		}
 	}
+
+	if flag&LogFlagLogID == LogFlagLogID {
+		if logId := GetLogId(ctx); logId != "" {
+			out.WriteByte('[')
+			out.WriteString(logId)
+			out.WriteString("] ")
+		}
+	}
+
 	if flag&LogFlagTime == LogFlagTime {
 		now := time.Now().Format("15:04:05.000")
 		out.WriteString(now)
@@ -188,17 +214,23 @@ func logf(_ context.Context, flag int, level Level, cl int, format string, v ...
 		out.WriteString(strconv.FormatInt(int64(line), 10))
 		out.WriteString(" ")
 	}
-	logData := fmt.Sprintf(format, v...)
-	logData = trimRightSpace(logData)
-	out.WriteString(logData)
+	payload := format
+	if len(v) > 0 {
+		payload = fmt.Sprintf(format, v...)
+	}
+	out.WriteString(payload)
 	out.WriteByte('\n')
-	output := out.String()
-	if flag&LogFlagColor == LogFlagColor {
-		if foo := _levelColor[level]; foo != nil {
-			output = foo(out.String())
+	if !color.NoColor && flag&LogFlagColor == LogFlagColor {
+		if colorFunc := _levelColor[level]; colorFunc != nil {
+			colorOut := colorFunc(out.String())
+			out.Reset()
+			out.WriteString(colorOut)
 		}
 	}
-	print(output)
+	_, err := writer.Write(out.Bytes())
+	if err != nil {
+		log.Printf("writing log error: %v", err)
+	}
 }
 
 func StdOut(format string, v ...interface{}) {
