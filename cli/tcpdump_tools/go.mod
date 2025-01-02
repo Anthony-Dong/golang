@@ -3,7 +3,7 @@ module github.com/anthony-dong/golang/cli/tcpdump_tools
 go 1.18
 
 require (
-	github.com/anthony-dong/golang v0.0.13-0.20241231115545-af95da7dc9e6
+	github.com/anthony-dong/golang v0.0.13
 	github.com/fatih/color v1.17.0
 	github.com/google/gopacket v1.1.19
 	github.com/pkg/errors v0.9.1
