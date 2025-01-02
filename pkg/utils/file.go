@@ -190,6 +190,13 @@ func WriteFile(filename string, content []byte) error {
 	return nil
 }
 
+func WriteFileForce(filename string, content []byte) error {
+	if err := os.MkdirAll(filepath.Dir(filename), DefaultDirMode); err != nil {
+		return err
+	}
+	return WriteFile(filename, content)
+}
+
 func GetCmdName() string {
 	//return "go-tool"
 	return strings.TrimSuffix(filepath.Base(os.Args[0]), filepath.Ext(os.Args[0]))

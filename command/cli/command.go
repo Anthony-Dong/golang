@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 
+	"github.com/anthony-dong/golang/command/cmake"
 	_goto "github.com/anthony-dong/golang/command/goto"
 
 	"github.com/anthony-dong/golang/command/diff"
@@ -134,6 +135,9 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 		return nil, err
 	}
 	if err := command.AddCommand(cmd, _goto.NewCommand); err != nil {
+		return nil, err
+	}
+	if err := command.AddCommand(cmd, cmake.NewCommand); err != nil {
 		return nil, err
 	}
 	return cmd, nil
