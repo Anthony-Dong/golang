@@ -1,0 +1,23 @@
+[Unit]
+Description={{ .Desc }}
+StartLimitIntervalSec=90s
+StartLimitBurst=5
+After=network.target network-online.target nss-lookup.target
+Wants=network.target network-online.target nss-lookup.target
+
+[Service]
+ExecStart={{ .Bin }}{{ range .Args }} {{ . }}{{ end }}
+Restart=always
+RestartSec=10
+KillMode=process
+TimeoutStopSec=10
+CPUAccounting=yes
+MemoryAccounting=yes
+# KillMode=process
+{{- range $key, $value:=.Envs }}
+Environment="{{ $key }}={{ $value }}"
+{{- end }}
+
+[Install]
+WantedBy=multi-user.target
+Alias={{ .Name }}

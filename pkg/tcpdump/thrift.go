@@ -6,44 +6,52 @@ import (
 
 	"github.com/anthony-dong/golang/pkg/utils"
 
-	"github.com/pkg/errors"
-
 	"github.com/anthony-dong/golang/pkg/codec/thrift_codec"
 )
 
-func NewThriftDecoder(parser ThriftMessageParser) Decoder {
-	return func(ctx *Context, reader SourceReader, packet Packet) error {
-		protocol, metaInfo, err := thrift_codec.GetProtocol(ctx, reader)
-		if err != nil {
-			return errors.Wrap(err, "decode thrift protocol error")
-		}
-		result, err := thrift_codec.DecodeMessage(ctx, thrift_codec.NewTProtocol(reader, protocol))
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("decode thrift message error, protocol: %s", protocol))
-		}
-		result.MetaInfo = metaInfo
-		result.Protocol = protocol
-		result.Transport = &thrift_codec.TransportInfo{FromAddr: packet.Src, ToAddr: packet.Dst}
-		message, err := parser.ParseMessage(ctx, result, packet)
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("parse message error, protocol: %s", protocol))
-		}
-		ctx.PrintPayload(utils.Bytes2String(message))
-		return nil
+var _ Message = (*ThriftMessage)(nil)
+
+type ThriftMessage struct {
+	Msg *thrift_codec.ThriftMessage
+}
+
+func NewThriftMessage(msg *thrift_codec.ThriftMessage) *ThriftMessage {
+	return &ThriftMessage{
+		Msg: msg,
 	}
 }
 
-type ThriftMessageParser interface {
-	ParseMessage(ctx context.Context, msg *thrift_codec.ThriftMessage, _ Packet) ([]byte, error)
+func (*ThriftMessage) Type() MessageType {
+	return MessageType_Thrift
 }
 
-type defaultThriftMessageParser struct {
+func (t *ThriftMessage) String() string {
+	return utils.ToJson(t.Msg, true)
 }
 
-func NewThriftMessageParser() ThriftMessageParser {
-	return &defaultThriftMessageParser{}
+var _ Decoder = (*ThriftDecoder)(nil)
+
+type ThriftDecoder struct{}
+
+func NewThriftDecoder() *ThriftDecoder {
+	return &ThriftDecoder{}
 }
 
-func (*defaultThriftMessageParser) ParseMessage(ctx context.Context, msg *thrift_codec.ThriftMessage, _ Packet) ([]byte, error) {
-	return utils.ToJsonByte(msg, true), nil
+func (d *ThriftDecoder) Decode(ctx context.Context, reader Reader, packet *TcpPacket) (Message, error) {
+	protocol, metaInfo, err := thrift_codec.GetProtocol(ctx, reader)
+	if err != nil {
+		return nil, fmt.Errorf(`decode thrift protocol find err: %s`, err.Error())
+	}
+	msg, err := thrift_codec.DecodeMessage(ctx, thrift_codec.NewTProtocol(reader, protocol))
+	if err != nil {
+		return nil, fmt.Errorf(`decode thrift [protocol=%s] message find err: %s`, protocol, err.Error())
+	}
+	msg.MetaInfo = metaInfo
+	msg.Protocol = protocol
+	msg.Transport = &thrift_codec.TransportInfo{FromAddr: packet.Src, ToAddr: packet.Dst}
+	return NewThriftMessage(msg), nil
+}
+
+func (*ThriftDecoder) Name() string {
+	return "thrift"
 }

@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 
@@ -14,6 +13,117 @@ import (
 	"github.com/anthony-dong/golang/pkg/bufutils"
 	"github.com/anthony-dong/golang/pkg/codec/http_codec"
 )
+
+var _ Message = (*HttpMessage)(nil)
+
+type HttpMessage struct {
+	Req  *http.Request
+	Resp *http.Response
+}
+
+func (m *HttpMessage) String() string {
+	if m.Req != nil {
+		out, err := httputil.DumpRequestOut(m.Req, true)
+		if err != nil {
+			return err.Error()
+		}
+		return string(out)
+	}
+	out, err := httputil.DumpResponse(m.Resp, true)
+	if err != nil {
+		return err.Error()
+	}
+	return string(out)
+}
+
+func (*HttpMessage) Type() MessageType {
+	return MessageType_HTTP
+}
+
+func NewHttpReqMessage(req *http.Request) *HttpMessage {
+	return &HttpMessage{
+		Req: req,
+	}
+}
+
+func NewHttpRespMessage(resp *http.Response) *HttpMessage {
+	return &HttpMessage{
+		Resp: resp,
+	}
+}
+
+var _ Decoder = (*HttpDecoder)(nil)
+
+type HttpDecoder struct{}
+
+func NewHttpDecoder() Decoder {
+	return &HttpDecoder{}
+}
+
+var strCRLF = []byte("\r\n")
+
+func (h *HttpDecoder) Decode(ctx context.Context, reader Reader, packet *TcpPacket) (Message, error) {
+	crlfNum := 0 // /r/n 换行符， http协议分割符号本质上是换行符！所以清除头部的换行符(假如存在这种case)
+	for {
+		peek, err := reader.Peek(2 + crlfNum)
+		if err != nil {
+			return nil, errors.Wrap(err, `read http content error`)
+		}
+		peek = peek[crlfNum:]
+		if peek[0] == '\r' && peek[1] == '\n' {
+			crlfNum = crlfNum + 2
+			continue
+		}
+		break
+	}
+	if crlfNum != 0 {
+		if _, err := reader.Read(make([]byte, crlfNum)); err != nil {
+			return nil, errors.Wrap(err, `read http content error`)
+		}
+	}
+	copyR := &bytes.Buffer{}
+	bufReader := bufio.NewReader(io.TeeReader(reader, copyR)) // copy
+
+	isRequest, err := isHttpRequest(ctx, reader)
+	if err != nil {
+		return nil, errors.Wrap(err, `read http request content error`)
+	}
+	if isRequest {
+		req, err := http.ReadRequest(bufReader)
+		if err != nil {
+			return nil, errors.Wrap(err, `read http request content err`)
+		}
+		return NewHttpReqMessage(req), nil
+	}
+
+	isResponse, err := isHttpResponse(ctx, reader)
+	if err != nil {
+		return nil, errors.Wrap(err, `read http response content error`)
+	}
+	if isResponse {
+		resp, err := http.ReadResponse(bufReader, nil)
+		if err != nil {
+			return nil, errors.Wrap(err, `read http response content error`)
+		}
+		if len(resp.TransferEncoding) > 0 && resp.TransferEncoding[0] == "chunked" {
+			chunked, err := http_codec.ReadChunked(bufReader)
+			if err != nil {
+				_ = resp.Body.Close()
+				return nil, errors.Wrap(err, `read http response content error, transfer encoding is chunked`)
+			}
+			_ = resp.Body.Close()
+			buffer := bufutils.NewBufferData(chunked)
+			defer bufutils.ResetBuffer(buffer)
+			resp.Body = io.NopCloser(buffer) // copy
+		}
+		return NewHttpRespMessage(resp), nil
+	}
+	return nil, errors.Errorf(`invalid http content`)
+}
+
+func (h *HttpDecoder) Name() string {
+	return "http1.1"
+}
 
 // 	MethodGet     = "GET"
 //	MethodHead    = "HEAD"
@@ -25,7 +135,7 @@ import (
 //	MethodOptions = "OPTIONS"
 //	MethodTrace   = "TRACE"
 
-func isHttpResponse(ctx context.Context, reader SourceReader) (bool, error) {
+func isHttpResponse(ctx context.Context, reader Reader) (bool, error) {
 	peek, err := reader.Peek(6)
 	if err != nil {
 		return false, err
@@ -35,7 +145,7 @@ func isHttpResponse(ctx context.Context, reader SourceReader) (bool, error) {
 	}
 	return false, nil
 }
-func isHttpRequest(ctx context.Context, reader SourceReader) (bool, error) {
+func isHttpRequest(ctx context.Context, reader Reader) (bool, error) {
 	peek, err := reader.Peek(7)
 	if err != nil {
 		return false, err
@@ -58,99 +168,98 @@ func isHttpRequest(ctx context.Context, reader SourceReader) (bool, error) {
 	return false, nil
 }
 
-func NewHTTP1Decoder() Decoder {
-	return func(ctx *Context, reader SourceReader, _ Packet) error {
-		crlfNum := 0 // /r/n 换行符， http协议分割符号本质上是换行符！所以清除头部的换行符(假如存在这种case)
-		for {
-			peek, err := reader.Peek(2 + crlfNum)
-			if err != nil {
-				return errors.Wrap(err, `read http content error`)
-			}
-			peek = peek[crlfNum:]
-			if peek[0] == '\r' && peek[1] == '\n' {
-				crlfNum = crlfNum + 2
-				continue
-			}
-			break
-		}
-		if crlfNum != 0 {
-			if _, err := reader.Read(make([]byte, crlfNum)); err != nil {
-				return errors.Wrap(err, `read http content error`)
-			}
-		}
+//
+//func NewHTTP1Decoder() Decoder {
+//	return func(ctx *Context, reader SourceReader, _ Packet) error {
+//		crlfNum := 0 // /r/n 换行符， http协议分割符号本质上是换行符！所以清除头部的换行符(假如存在这种case)
+//		for {
+//			peek, err := reader.Peek(2 + crlfNum)
+//			if err != nil {
+//				return errors.Wrap(err, `read http content error`)
+//			}
+//			peek = peek[crlfNum:]
+//			if peek[0] == '\r' && peek[1] == '\n' {
+//				crlfNum = crlfNum + 2
+//				continue
+//			}
+//			break
+//		}
+//		if crlfNum != 0 {
+//			if _, err := reader.Read(make([]byte, crlfNum)); err != nil {
+//				return errors.Wrap(err, `read http content error`)
+//			}
+//		}
+//
+//		copyR := bufutils.NewBuffer()
+//		defer bufutils.ResetBuffer(copyR)
+//		bufReader := bufio.NewReader(io.TeeReader(reader, copyR)) // copy
+//
+//		isRequest, err := isHttpRequest(ctx, reader)
+//		if err != nil {
+//			return errors.Wrap(err, `read http request content error`)
+//		}
+//		if isRequest {
+//			req, err := http.ReadRequest(bufReader)
+//			if err != nil {
+//				return errors.Wrap(err, `read http request content err`)
+//			}
+//			if err := adapterDump(ctx, copyR, req.Header, req.Body, func() ([]byte, error) {
+//				return httputil.DumpRequest(req, false)
+//			}); err != nil {
+//				return errors.Wrap(err, `dump http request content error`)
+//			}
+//			return nil
+//		}
+//
+//		isResponse, err := isHttpResponse(ctx, reader)
+//		if err != nil {
+//			return errors.Wrap(err, `read http response content error`)
+//		}
+//		if isResponse {
+//			resp, err := http.ReadResponse(bufReader, nil)
+//			if err != nil {
+//				return errors.Wrap(err, `read http response content error`)
+//			}
+//			if len(resp.TransferEncoding) > 0 && resp.TransferEncoding[0] == "chunked" {
+//				chunked, err := http_codec.ReadChunked(bufReader)
+//				if err != nil {
+//					_ = resp.Body.Close()
+//					return errors.Wrap(err, `read http response content error, transfer encoding is chunked`)
+//				}
+//				_ = resp.Body.Close()
+//				buffer := bufutils.NewBufferData(chunked)
+//				defer bufutils.ResetBuffer(buffer)
+//				resp.Body = ioutil.NopCloser(buffer) // copy
+//			}
+//			if err := adapterDump(ctx, copyR, resp.Header, resp.Body, func() ([]byte, error) {
+//				return httputil.DumpResponse(resp, false)
+//			}); err != nil {
+//				return errors.Wrap(err, `dump http response content error`)
+//			}
+//			return nil
+//		}
+//		return errors.Errorf(`invalid http content`)
+//	}
+//}
 
-		copyR := bufutils.NewBuffer()
-		defer bufutils.ResetBuffer(copyR)
-		bufReader := bufio.NewReader(io.TeeReader(reader, copyR)) // copy
-
-		isRequest, err := isHttpRequest(ctx, reader)
-		if err != nil {
-			return errors.Wrap(err, `read http request content error`)
-		}
-		if isRequest {
-			req, err := http.ReadRequest(bufReader)
-			if err != nil {
-				return errors.Wrap(err, `read http request content err`)
-			}
-			if err := adapterDump(ctx, copyR, req.Header, req.Body, func() ([]byte, error) {
-				return httputil.DumpRequest(req, false)
-			}); err != nil {
-				return errors.Wrap(err, `dump http request content error`)
-			}
-			return nil
-		}
-
-		isResponse, err := isHttpResponse(ctx, reader)
-		if err != nil {
-			return errors.Wrap(err, `read http response content error`)
-		}
-		if isResponse {
-			resp, err := http.ReadResponse(bufReader, nil)
-			if err != nil {
-				return errors.Wrap(err, `read http response content error`)
-			}
-			if len(resp.TransferEncoding) > 0 && resp.TransferEncoding[0] == "chunked" {
-				chunked, err := http_codec.ReadChunked(bufReader)
-				if err != nil {
-					_ = resp.Body.Close()
-					return errors.Wrap(err, `read http response content error, transfer encoding is chunked`)
-				}
-				_ = resp.Body.Close()
-				buffer := bufutils.NewBufferData(chunked)
-				defer bufutils.ResetBuffer(buffer)
-				resp.Body = ioutil.NopCloser(buffer) // copy
-			}
-			if err := adapterDump(ctx, copyR, resp.Header, resp.Body, func() ([]byte, error) {
-				return httputil.DumpResponse(resp, false)
-			}); err != nil {
-				return errors.Wrap(err, `dump http response content error`)
-			}
-			return nil
-		}
-		return errors.Errorf(`invalid http content`)
-	}
-}
-
-var strCRLF = []byte("\r\n")
-
-func adapterDump(ctx *Context, src *bytes.Buffer, header http.Header, body io.ReadCloser, dumpHeader func() ([]byte, error)) error {
-	defer body.Close()
-	bodyData, err := http_codec.DecodeHttpBody(body, header, false)
-	if err != nil {
-		ctx.Verbose("[HTTP] decode http body err: %v", err)
-		ctx.PrintPayload(src.String())
-		return nil
-	}
-	if len(bodyData) == 0 {
-		ctx.PrintPayload(src.String())
-		return nil
-	}
-	responseHeader, err := dumpHeader()
-	if err != nil {
-		ctx.PrintPayload(src.String())
-		return nil
-	}
-	ctx.PrintPayload(string(responseHeader))
-	ctx.PrintPayload(string(bodyData))
-	return nil
-}
+//func adapterDump(ctx context.Context, src *bytes.Buffer, header http.Header, body io.ReadCloser, dumpHeader func() ([]byte, error)) error {
+//	defer body.Close()
+//	bodyData, err := http_codec.DecodeHttpBody(body, header, false)
+//	if err != nil {
+//		ctx.Verbose("[HTTP] decode http body err: %v", err)
+//		ctx.PrintPayload(src.String())
+//		return nil
+//	}
+//	if len(bodyData) == 0 {
+//		ctx.PrintPayload(src.String())
+//		return nil
+//	}
+//	responseHeader, err := dumpHeader()
+//	if err != nil {
+//		ctx.PrintPayload(src.String())
+//		return nil
+//	}
+//	ctx.PrintPayload(string(responseHeader))
+//	ctx.PrintPayload(string(bodyData))
+//	return nil
+//}

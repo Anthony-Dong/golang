@@ -31,8 +31,11 @@ require (
 )
 
 require (
+	github.com/atotto/clipboard v0.1.4
 	github.com/cloudwego/gopkg v0.1.2
 	github.com/golang/protobuf v1.5.2
+	github.com/jroimartin/gocui v0.5.0
+	github.com/mattn/go-runewidth v0.0.16
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 )
 
@@ -67,7 +70,9 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/gls v0.0.0-20220109145502-612d0167dce5 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/nsf/termbox-go v1.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect

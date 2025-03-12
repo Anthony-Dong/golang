@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -90,4 +91,29 @@ func PrettyDir(dir string) string {
 		return dir
 	}
 	return rel
+}
+
+var unitMap = []string{"Byte", "KB", "MB", "GB", "TB", "PB", "EB"}
+
+// PrettySize 函数用于将字节大小转换为易读的格式
+func PrettySize(size int) string {
+	// 处理输入为 0 的情况
+	if size == 0 {
+		return fmt.Sprintf("%d%s", size, unitMap[0])
+	}
+	// 用于记录转换的次数
+	unitIndex := 0
+	// 存储最终转换后的大小
+	floatSize := float64(size)
+	maxUnixIndex := len(unitMap) - 1
+	// 循环进行单位转换，直到大小小于 1024
+	for floatSize >= 1024 && unitIndex < maxUnixIndex {
+		floatSize /= 1024
+		unitIndex++
+	}
+	// 根据不同情况格式化输出
+	if unitIndex == 0 {
+		return fmt.Sprintf("%d%s", int(floatSize), unitMap[unitIndex])
+	}
+	return fmt.Sprintf("%.3f%s", floatSize, unitMap[unitIndex])
 }

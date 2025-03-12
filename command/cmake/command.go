@@ -4,11 +4,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/anthony-dong/golang/command"
 	"github.com/anthony-dong/golang/command/cmake/static"
 	"github.com/anthony-dong/golang/pkg/logs"
 	"github.com/anthony-dong/golang/pkg/utils"
-	"github.com/spf13/cobra"
 )
 
 func NewCommand() (*cobra.Command, error) {

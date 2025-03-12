@@ -223,3 +223,23 @@ func NewListData() *thriftstruct.ListData {
 		L_Ref:   []*thriftstruct.NormalStruct{NewNormalStruct()},
 	}
 }
+
+func TestEncode(t *testing.T) {
+	buf := bytes.NewBuffer(nil)
+	w := NewTProtocolEncoder(buf, UnframedBinary)
+	if err := w.WriteFieldBegin("", thrift.STRING, 8); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.WriteString("1"); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.WriteFieldEnd(); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Flush(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	data := buf.Bytes()
+	t.Log(data)
+
+}
