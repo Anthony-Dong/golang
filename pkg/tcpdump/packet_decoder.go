@@ -35,6 +35,10 @@ func (p *TcpPacket) Type() MessageType {
 	return MessageType_TcpPacket
 }
 
+func (p *TcpPacket) String() string {
+	return p.Header
+}
+
 func (p *TcpPacket) IsFin() bool {
 	for index, elem := range p.TCPFlag {
 		if elem == "FIN" && index == 0 {
@@ -123,7 +127,7 @@ func (c *PacketDecoder) decode(ctx context.Context, packet *TcpPacket, payload [
 		reader := bufio.NewReader(bytes.NewBuffer(payload))
 		msg, err := decoder.Decode(ctx, reader, packet)
 		if err != nil {
-			c.writeMessage(NewLogMessage(logs.LevelWarn, "decoder [%s] decode msg find err: %v", decoder.Name(), err))
+			c.writeMessage(NewLogMessage(ctx, logs.LevelWarn, "decoder [%s] decode msg find err: %v", decoder.Name(), err))
 			return false
 		}
 		c.writeMessage(msg)

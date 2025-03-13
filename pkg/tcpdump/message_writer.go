@@ -3,8 +3,6 @@ package tcpdump
 import (
 	"fmt"
 	"strings"
-
-	"github.com/anthony-dong/golang/pkg/utils"
 )
 
 type MessageWriter interface {
@@ -28,7 +26,6 @@ func NewConsoleLogMessageWriter(enable []MessageType) MessageWriter {
 
 func (c *consoleLogMessageWriter) Write(msg Message) {
 	if c.enable[msg.Type()] {
-		ss := utils.ToString(msg)
-		fmt.Println(strings.TrimSpace(ss))
+		fmt.Println(strings.TrimSpace(msg.String()))
 	}
 }

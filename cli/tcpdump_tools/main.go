@@ -4,12 +4,13 @@ import (
 	"context"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/anthony-dong/golang/cli/tcpdump_tools/tcpdump"
 )
 
 func main() {
-	command, err := tcpdump.NewCommand()
+	command, err := tcpdump.NewCommand(filepath.Base(os.Args[0]))
 	if err != nil {
 		exitError(err)
 	}

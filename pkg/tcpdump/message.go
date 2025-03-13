@@ -1,15 +1,14 @@
 package tcpdump
 
 import (
-	"fmt"
-	"time"
+	"context"
 
 	"github.com/anthony-dong/golang/pkg/logs"
-	"github.com/anthony-dong/golang/pkg/utils"
 )
 
 type Message interface {
 	Type() MessageType
+	String() string
 }
 
 type MessageType string
@@ -30,16 +29,12 @@ var _ Message = (*UnknownMessage)(nil)
 var _ Message = (*LogMessage)(nil)
 
 type LogMessage struct {
-	Time  time.Time  `json:"time"`
-	Level logs.Level `json:"level"`
-	Msg   string     `json:"msg"`
+	Msg string `json:"msg"`
 }
 
-func NewLogMessage(level logs.Level, format string, v ...interface{}) *LogMessage {
+func NewLogMessage(ctx context.Context, level logs.Level, format string, v ...interface{}) *LogMessage {
 	return &LogMessage{
-		Time:  time.Now(),
-		Level: level,
-		Msg:   fmt.Sprintf(format, v...),
+		Msg: logs.Sprintf(ctx, logs.GetFlag(), level, -1, format, v...),
 	}
 }
 
@@ -47,8 +42,8 @@ func (*LogMessage) Type() MessageType {
 	return MessageType_Log
 }
 
-func (m *LogMessage) MarshalJSON() ([]byte, error) {
-	return utils.ToJsonByte(m), nil
+func (m *LogMessage) String() string {
+	return m.Msg
 }
 
 type UnknownMessage struct {
@@ -56,6 +51,10 @@ type UnknownMessage struct {
 
 func (*UnknownMessage) Type() MessageType {
 	return MessageType_Unknown
+}
+
+func (*UnknownMessage) String() string {
+	return "<UnknownMessage>"
 }
 
 type TcpdumpHeader struct {

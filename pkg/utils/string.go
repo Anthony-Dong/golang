@@ -93,12 +93,11 @@ func ToString(value interface{}) string {
 		return strconv.FormatFloat(v, 'f', -1, 64)
 	case []byte:
 		return base64.StdEncoding.EncodeToString(v)
+	case fmt.Stringer:
+		return v.String()
 	default:
 		if v == nil {
 			return ""
-		}
-		if str, isOk := value.(fmt.Stringer); isOk {
-			return str.String()
 		}
 		if codec, isOk := value.(encoding.TextMarshaler); isOk {
 			if text, err := codec.MarshalText(); err == nil {

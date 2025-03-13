@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
+
+	"github.com/anthony-dong/golang/pkg/logs"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -16,15 +19,27 @@ import (
 	"github.com/anthony-dong/golang/pkg/utils"
 )
 
-func NewCommand(ops ...DecodeOption) (*cobra.Command, error) {
+func joinCommand(name string) string {
+	cmd := filepath.Base(os.Args[0])
+	if cmd == name {
+		return name
+	}
+	return cmd + " " + name
+}
+
+func NewCommand(name string, ops ...DecodeOption) (*cobra.Command, error) {
 	var (
 		filename string
+		verbose  bool
 	)
 	cmd := &cobra.Command{
-		Use:     `tcpdump_tools [-r file] [-v] [-X] [--max dump size]`,
-		Short:   `Decode tcpdump file & stream`,
-		Long:    `decode tcpdump file, help doc: https://github.com/anthony-dong/golang/tree/master/cli/tcpdump_tools`,
-		Example: `  tcpdump 'port 8080' -X -l -n | tcpdump_tools`,
+		Use:   fmt.Sprintf(`%s [-r file] [-v]`, name),
+		Short: `Decode tcpdump packets`,
+		Example: fmt.Sprintf(`  
+1. 在线抓包: tcpdump 'port 8888' -X -l -n | %s
+2. 离线分析:
+ - 抓取流量: tcpdump 'port 8888' -w xxx.pcap
+ - 分析流量: %[1]s -r xxx.pcap`, joinCommand(name)),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			option := NewDecodeOptions()
 			for _, op := range ops {
@@ -39,6 +54,9 @@ func NewCommand(ops ...DecodeOption) (*cobra.Command, error) {
 				case PacketSource_File:
 					msgTypes = append(msgTypes, tcpdump.MessageType_TcpPacket)
 				}
+				if verbose {
+					msgTypes = append(msgTypes, tcpdump.MessageType_Log)
+				}
 				option.MsgWriter = tcpdump.NewConsoleLogMessageWriter(msgTypes)
 			}
 			if len(option.Decoders) == 0 {
@@ -51,7 +69,8 @@ func NewCommand(ops ...DecodeOption) (*cobra.Command, error) {
 			return DecodePacketSource(cmd.Context(), source, option)
 		},
 	}
-	cmd.Flags().StringVarP(&filename, "file", "r", "", "The packets file, eg: tcpdump_xxx_file.pcap.")
+	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose mode")
+	cmd.Flags().StringVarP(&filename, "file", "r", "", "读取tcpdump抓取的文件")
 	return cmd, nil
 }
 
@@ -80,6 +99,7 @@ func DecodePacketSource(ctx context.Context, source PacketSource, option DecodeO
 	decoder := tcpdump.NewPacketDecoder(option.MsgWriter)
 	for _, v := range option.Decoders {
 		decoder.AddDecoder(v)
+		logs.CtxInfo(ctx, "use decoder %s", v.Name())
 	}
 	for data := range source.Packets() {
 		decoder.Decode(ctx, NewTcpPacket(data, option.MsgWriter))

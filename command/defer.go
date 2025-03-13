@@ -1,7 +1,6 @@
 package command
 
 import (
-	"os"
 	"runtime/debug"
 	"sync"
 
@@ -23,9 +22,6 @@ func Defer(task func()) {
 
 func Close() {
 	closeOnce.Do(func() {
-		if len(deferTask) > 0 {
-			logs.Debug("process (%d) start run the defer tasks", os.Getpid())
-		}
 		for index := len(deferTask) - 1; index >= 0; index-- {
 			func() {
 				defer func() {
