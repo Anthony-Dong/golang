@@ -36,7 +36,7 @@ func NewListGoModSize() (*cobra.Command, error) {
 				totalSize = totalSize + elem.ZipSize
 				fmt.Println(utils.ToJson(elem))
 			}
-			fmt.Println("totalSize:", totalSize)
+			fmt.Printf("> total: %v (%s)\n", totalSize, utils.PrettySize(int(totalSize)))
 			return nil
 		},
 	}, nil
@@ -50,6 +50,7 @@ type ModInfo struct {
 	GoMod     string    `json:"GoMod"`
 	GoVersion string    `json:"GoVersion"`
 	ZipSize   int64     `json:"ZipSize"`
+	Size      string    `json:"Size"`
 }
 
 func SetModSize(input []*ModInfo) error {
@@ -66,6 +67,7 @@ func SetModSize(input []*ModInfo) error {
 			return fmt.Errorf(`state file [%s] find err: %s`, filename, err.Error())
 		}
 		elem.ZipSize = stat.Size()
+		elem.Size = utils.PrettySize(int(elem.ZipSize))
 	}
 	return nil
 }

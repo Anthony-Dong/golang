@@ -8,11 +8,13 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
+	"unsafe"
 
 	"github.com/fatih/color"
 )
@@ -26,6 +28,22 @@ var writer io.Writer = os.Stdout
 
 func SetWriter(w io.Writer) {
 	writer = w
+}
+
+func init() {
+	for _, elem := range os.Args {
+		if elem == "-v" || elem == "--verbose" {
+			SetLevel(LevelDebug)
+		}
+	}
+}
+
+func SetFileWriter(filename string) {
+	open, err := os.OpenFile(filename, os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return
+	}
+	writer = open
 }
 
 func SetPrinterStdError() {
@@ -60,6 +78,10 @@ func SetLevelString(level string) {
 
 func SelFlag(flag int) {
 	defaultLogFlag = flag
+}
+
+func GetFlag() int {
+	return defaultLogFlag
 }
 
 func LogLevel() Level {
@@ -164,13 +186,7 @@ func CtxWithLogID(ctx context.Context, id string) context.Context {
 	return context.WithValue(ctx, LogIDKey, id)
 }
 
-func logf(ctx context.Context, flag int, level Level, cl int, format string, v ...interface{}) {
-	if level < defaultLogLevel {
-		return
-	}
-	if writer == nil {
-		return
-	}
+func Sprintf(ctx context.Context, flag int, level Level, cl int, format string, v ...interface{}) string {
 	out := bytes.Buffer{}
 	if flag&LogFlagPrefix == LogFlagPrefix {
 		switch level {
@@ -203,7 +219,7 @@ func logf(ctx context.Context, flag int, level Level, cl int, format string, v .
 		out.WriteString(" ")
 	}
 
-	if flag&LogFlagCaller == LogFlagCaller {
+	if flag&LogFlagCaller == LogFlagCaller && cl >= 0 {
 		_, file, line, ok := runtime.Caller(cl)
 		if !ok {
 			file = "???"
@@ -219,7 +235,6 @@ func logf(ctx context.Context, flag int, level Level, cl int, format string, v .
 		payload = fmt.Sprintf(format, v...)
 	}
 	out.WriteString(payload)
-	out.WriteByte('\n')
 	if !color.NoColor && flag&LogFlagColor == LogFlagColor {
 		if colorFunc := _levelColor[level]; colorFunc != nil {
 			colorOut := colorFunc(out.String())
@@ -227,7 +242,27 @@ func logf(ctx context.Context, flag int, level Level, cl int, format string, v .
 			out.WriteString(colorOut)
 		}
 	}
-	_, err := writer.Write(out.Bytes())
+	return out.String()
+}
+
+func unsafeBytes(data string) []byte {
+	hdr := *(*reflect.StringHeader)(unsafe.Pointer(&data))
+	return *(*[]byte)(unsafe.Pointer(&reflect.SliceHeader{
+		Data: hdr.Data,
+		Len:  hdr.Len,
+		Cap:  hdr.Len,
+	}))
+}
+
+func logf(ctx context.Context, flag int, level Level, cl int, format string, v ...interface{}) {
+	if level < defaultLogLevel {
+		return
+	}
+	if writer == nil {
+		return
+	}
+	data := Sprintf(ctx, flag, level, cl+1, format, v...)
+	_, err := writer.Write(unsafeBytes(data + "\n"))
 	if err != nil {
 		log.Printf("writing log error: %v", err)
 	}

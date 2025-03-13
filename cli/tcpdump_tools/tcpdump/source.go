@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"sync"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 	"github.com/pkg/errors"
+
+	"github.com/anthony-dong/golang/pkg/tcpdump"
 
 	"github.com/anthony-dong/golang/pkg/codec"
 )
@@ -19,16 +22,46 @@ type PacketSource interface {
 	Packets() chan gopacket.Packet
 }
 
-func NewDecodeOptions() gopacket.DecodeOptions {
-	options := gopacket.DecodeOptions{
-		Lazy:                     false,
-		NoCopy:                   true,
-		DecodeStreamsAsDatagrams: true,
+type DecodeOptions struct {
+	gopacket.DecodeOptions
+	MsgWriter tcpdump.MessageWriter
+	Decoders  []tcpdump.Decoder
+}
+
+type DecodeOption func(options *DecodeOptions)
+
+func WithMsgWriter(writer tcpdump.MessageWriter) DecodeOption {
+	return func(options *DecodeOptions) {
+		options.MsgWriter = writer
+	}
+}
+
+func WithDecoder(decoder tcpdump.Decoder) DecodeOption {
+	return func(options *DecodeOptions) {
+		options.Decoders = append(options.Decoders, decoder)
+	}
+}
+
+type PacketSourceType string
+
+const (
+	PacketSource_File    PacketSourceType = "File"
+	PacketSource_Consul  PacketSourceType = "Consul"
+	PacketSource_Unknown PacketSourceType = "Unknown"
+)
+
+func NewDecodeOptions() DecodeOptions {
+	options := DecodeOptions{
+		DecodeOptions: gopacket.DecodeOptions{
+			Lazy:                     false,
+			NoCopy:                   true,
+			DecodeStreamsAsDatagrams: true,
+		},
 	}
 	return options
 }
 
-func NewFileSource(file string, cfg gopacket.DecodeOptions) (PacketSource, error) {
+func NewFileSource(file string, cfg DecodeOptions) (PacketSource, error) {
 	if file == "" {
 		return nil, errors.New(`required file`)
 	}
@@ -41,7 +74,7 @@ func NewFileSource(file string, cfg gopacket.DecodeOptions) (PacketSource, error
 		return nil, errors.Wrap(err, fmt.Sprintf("open %s file err", filename))
 	}
 	source := gopacket.NewPacketSource(src, layers.LayerTypeEthernet)
-	source.DecodeOptions = cfg
+	source.DecodeOptions = cfg.DecodeOptions
 	return source, nil
 }
 
@@ -50,14 +83,17 @@ type ConsulSource struct {
 	lines   chan []string
 	packets chan gopacket.Packet
 	gopacket.DecodeOptions
+	initOnce sync.Once
+	writer   tcpdump.MessageWriter
 }
 
-func NewConsulSource(r io.Reader, cfg gopacket.DecodeOptions) PacketSource {
+func NewConsulSource(r io.Reader, cfg DecodeOptions) *ConsulSource {
 	return &ConsulSource{
 		lines:         make(chan []string, 1),
 		packets:       make(chan gopacket.Packet, 1),
 		r:             r,
-		DecodeOptions: cfg,
+		DecodeOptions: cfg.DecodeOptions,
+		writer:        cfg.MsgWriter,
 	}
 }
 
@@ -90,14 +126,16 @@ func (t *ConsulSource) Read() {
 	close(t.lines)
 }
 
-func (t *ConsulSource) Packets() chan gopacket.Packet {
+func (t *ConsulSource) init() {
 	go func() {
 		t.Read()
 	}()
 	go func() {
 		for elem := range t.lines {
 			header := elem[0]
-			fmt.Println(header)
+			t.writer.Write(&tcpdump.TcpdumpHeader{
+				Header: header,
+			})
 			payload := &bytes.Buffer{}
 			for _, line := range elem[1:] {
 				payload.WriteString(line)
@@ -122,10 +160,14 @@ func (t *ConsulSource) Packets() chan gopacket.Packet {
 				wp.Wait()
 				continue
 			}
-			fmt.Println(string(codec.NewHexDumpCodec().Encode(decode)))
+			t.writer.Write(&tcpdump.TcpdumpPayload{Payload: decode})
 		}
 		close(t.packets)
 	}()
+}
+
+func (t *ConsulSource) Packets() chan gopacket.Packet {
+	t.initOnce.Do(t.init)
 	return t.packets
 }
 

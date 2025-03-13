@@ -5,63 +5,104 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
+
+	"github.com/anthony-dong/golang/pkg/logs"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/spf13/cobra"
 
+	"github.com/anthony-dong/golang/pkg/codec"
 	"github.com/anthony-dong/golang/pkg/tcpdump"
 	"github.com/anthony-dong/golang/pkg/utils"
 )
 
-func NewCommand(decoders map[string]tcpdump.Decoder) (*cobra.Command, error) {
+func joinCommand(name string) string {
+	cmd := filepath.Base(os.Args[0])
+	if cmd == name {
+		return name
+	}
+	return cmd + " " + name
+}
+
+func NewCommand(name string, ops ...DecodeOption) (*cobra.Command, error) {
 	var (
-		cfg      = tcpdump.NewDefaultConfig()
 		filename string
+		verbose  bool
 	)
 	cmd := &cobra.Command{
-		Use:     `tcpdump_tools [-r file] [-v] [-X] [--max dump size]`,
-		Short:   `Decode tcpdump file & stream`,
-		Long:    `decode tcpdump file, help doc: https://github.com/anthony-dong/golang/tree/master/cli/tcpdump_tools`,
-		Example: `  tcpdump 'port 8080' -X -l -n | tcpdump_tools`,
+		Use:   fmt.Sprintf(`%s [-r file] [-v]`, name),
+		Short: `Decode tcpdump packets`,
+		Example: fmt.Sprintf(`  
+1. 在线抓包: tcpdump 'port 8888' -X -l -n | %s
+2. 离线分析:
+ - 抓取流量: tcpdump 'port 8888' -w xxx.pcap
+ - 分析流量: %[1]s -r xxx.pcap`, joinCommand(name)),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return Run(cmd.Context(), filename, cfg, decoders)
+			option := NewDecodeOptions()
+			for _, op := range ops {
+				op(&option)
+			}
+			if option.MsgWriter == nil {
+				msgTypes := make([]tcpdump.MessageType, 0)
+				msgTypes = append(msgTypes, tcpdump.MessageType_Thrift, tcpdump.MessageType_HTTP)
+				switch GetPacketSourceType(filename) {
+				case PacketSource_Consul:
+					msgTypes = append(msgTypes, tcpdump.MessageType_TcpdumpPayload, tcpdump.MessageType_TcpdumpHeader)
+				case PacketSource_File:
+					msgTypes = append(msgTypes, tcpdump.MessageType_TcpPacket)
+				}
+				if verbose {
+					msgTypes = append(msgTypes, tcpdump.MessageType_Log)
+				}
+				option.MsgWriter = tcpdump.NewConsoleLogMessageWriter(msgTypes)
+			}
+			if len(option.Decoders) == 0 {
+				option.Decoders = append(option.Decoders, tcpdump.NewThriftDecoder(), tcpdump.NewHttpDecoder())
+			}
+			source, err := NewPacketSource(filename, option)
+			if err != nil {
+				return err
+			}
+			return DecodePacketSource(cmd.Context(), source, option)
 		},
 	}
-	cmd.Flags().StringVarP(&filename, "file", "r", "", "The packets file, eg: tcpdump_xxx_file.pcap.")
-	cmd.Flags().BoolVarP(&cfg.Verbose, "verbose", "v", false, "Enable Display decoded details.")
-	cmd.Flags().BoolVarP(&cfg.Dump, "dump", "X", false, "Enable Display payload details with hexdump.")
-	cmd.Flags().IntVarP(&cfg.DumpMaxSize, "max", "", 0, "The hexdump max size")
+	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose mode")
+	cmd.Flags().StringVarP(&filename, "file", "r", "", "读取tcpdump抓取的文件")
 	return cmd, nil
 }
 
-var DefaultDecoders = map[string]tcpdump.Decoder{
-	"Thrift":  tcpdump.NewThriftDecoder(tcpdump.NewThriftMessageParser()),
-	"HTTP1.X": tcpdump.NewHTTP1Decoder(),
+func NewPacketSource(filename string, options DecodeOptions) (PacketSource, error) {
+	if filename != "" {
+		return NewFileSource(filename, options)
+	}
+	if utils.CheckStdInFromPiped() {
+		source := NewConsulSource(os.Stdin, options)
+		return source, nil
+	}
+	return nil, fmt.Errorf("no packet source")
 }
 
-func Run(ctx context.Context, filename string, cfg tcpdump.ContextConfig, decoders map[string]tcpdump.Decoder) error {
-	decoder := tcpdump.NewCtx(ctx, cfg)
-	options := NewDecodeOptions()
-	for k, v := range decoders {
-		decoder.AddDecoder(k, v)
+func GetPacketSourceType(filename string) PacketSourceType {
+	if filename != "" {
+		return PacketSource_File
 	}
-	var source PacketSource
 	if utils.CheckStdInFromPiped() {
-		source = NewConsulSource(os.Stdin, options)
-		decoder.Config.PrintHeader = false
-	} else {
-		var err error
-		source, err = NewFileSource(filename, options)
-		if err != nil {
-			return err
-		}
-		decoder.Config.PrintHeader = true
+		return PacketSource_Consul
+	}
+	return PacketSource_Unknown
+}
+
+func DecodePacketSource(ctx context.Context, source PacketSource, option DecodeOptions) error {
+	decoder := tcpdump.NewPacketDecoder(option.MsgWriter)
+	for _, v := range option.Decoders {
+		decoder.AddDecoder(v)
+		logs.CtxInfo(ctx, "use decoder %s", v.Name())
 	}
 	for data := range source.Packets() {
-		packet := debugPacket(data, decoder)
-		decoder.HandlerPacket(packet)
+		decoder.Decode(ctx, NewTcpPacket(data, option.MsgWriter))
 		if wait, isOk := data.(WaitPacket); isOk {
 			wait.Notify()
 		}
@@ -71,13 +112,13 @@ func Run(ctx context.Context, filename string, cfg tcpdump.ContextConfig, decode
 
 var packetCounter = 1
 
-func debugPacket(packet gopacket.Packet, decoder *tcpdump.Context) tcpdump.Packet {
+func NewTcpPacket(packet gopacket.Packet, writer tcpdump.MessageWriter) *tcpdump.TcpPacket {
 	var (
 		src, dest         net.IP
 		L3IsOk, L4IsOK    bool
 		srcPort, destPort int
 		tcpFlags          []string
-		data              = tcpdump.Packet{}
+		data              = &tcpdump.TcpPacket{}
 	)
 	switch L3 := packet.NetworkLayer().(type) {
 	case *layers.IPv4:
@@ -94,7 +135,7 @@ func debugPacket(packet gopacket.Packet, decoder *tcpdump.Context) tcpdump.Packe
 		L4IsOK = true
 		srcPort = int(L4.SrcPort)
 		destPort = int(L4.DstPort)
-		tcpFlags = loadTcpFlag(L4)
+		tcpFlags = GetTcpFlags(L4)
 	}
 	if L3IsOk && L4IsOK {
 		data.Src = tcpdump.IpPort(src.String(), srcPort)
@@ -106,31 +147,40 @@ func debugPacket(packet gopacket.Packet, decoder *tcpdump.Context) tcpdump.Packe
 			data.Data = tcp.Payload
 		}
 		data.ACK = int(tcp.Ack)
-		payloadSize := len(tcp.Payload)
-		builder := strings.Builder{}
-		builder.WriteString(fmt.Sprintf("[%d] ", packetCounter))
-		builder.WriteString(fmt.Sprintf("[%s] ", packet.Metadata().Timestamp.Format(utils.FormatTimeV1)))
-		// packet.LinkLayer().LayerType(),
-		builder.WriteString(fmt.Sprintf("[%s-%s] ", packet.NetworkLayer().LayerType(), packet.TransportLayer().LayerType()))
-		builder.WriteString(fmt.Sprintf("[%s -> %s] ", data.Src, data.Dst))
-		builder.WriteString(fmt.Sprintf("[%s] ", strings.Join(tcpFlags, ",")))
-		builder.WriteString(fmt.Sprintf("%s ", GetRelativeInfo(data.Src, data.Dst, tcp)))
-		if payloadSize != 0 {
-			builder.WriteString(fmt.Sprintf("[%d Byte] ", payloadSize))
+		header := strings.Builder{}
+		header.WriteString(fmt.Sprintf("[%d] ", packetCounter))
+		header.WriteString(fmt.Sprintf("[%s] ", packet.Metadata().Timestamp.Format(utils.FormatTimeV1)))
+		header.WriteString(fmt.Sprintf("[%s-%s] ", packet.NetworkLayer().LayerType(), packet.TransportLayer().LayerType()))
+		header.WriteString(fmt.Sprintf("[%s -> %s] ", data.Src, data.Dst))
+		header.WriteString(fmt.Sprintf("[%s] ", strings.Join(tcpFlags, ",")))
+		header.WriteString(fmt.Sprintf("%s ", GetRelativeInfo(data.Src, data.Dst, tcp)))
+		if len(tcp.Payload) != 0 {
+			header.WriteString(fmt.Sprintf("[%d Byte] ", len(tcp.Payload)))
 		}
-		builder.WriteString(fmt.Sprintf("%v", result))
-		decoder.PrintHeader(builder.String())
+		header.WriteString(fmt.Sprintf("%v", result))
+		data.Header = header.String()
 		packetCounter = packetCounter + 1
 		return data
 	}
-
-	if packet.TransportLayer() != nil {
-		decoder.Dump(packet.TransportLayer().LayerPayload())
+	if layer := packet.TransportLayer(); layer != nil {
+		writer.Write(&TransportMessage{Layer: layer})
 	}
 	return data
 }
 
-func loadTcpFlag(L4 *layers.TCP) []string {
+type TransportMessage struct {
+	Layer gopacket.TransportLayer
+}
+
+func (m *TransportMessage) String() string {
+	return string(codec.NewHexDumpCodec().Encode(m.Layer.LayerPayload()))
+}
+
+func (*TransportMessage) Type() tcpdump.MessageType {
+	return tcpdump.MessageType_Layer
+}
+
+func GetTcpFlags(L4 *layers.TCP) []string {
 	var flags []string
 	if L4.FIN {
 		flags = append(flags, "FIN")
