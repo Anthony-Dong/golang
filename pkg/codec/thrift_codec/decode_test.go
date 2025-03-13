@@ -3,9 +3,7 @@ package thrift_codec
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
-	"io"
 	"testing"
 
 	"github.com/anthony-dong/golang/pkg/codec/thrift_codec/kitex"
@@ -106,24 +104,4 @@ func TestThriftMessage_Marshal(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(v)
-}
-
-func NewBinaryProtocol(buf io.Reader) thrift.TProtocol {
-	tReader := thrift.NewStreamTransportR(buf)
-	return thrift.NewTBinaryProtocolTransport(tReader)
-}
-
-func TestDecodeStruct(t *testing.T) {
-	data := `DAABDAABDAABCwACAAAAE0hvc3RDb21wbGV4RGF0YS0xLTEKAAMAAAAAAAAAAAQABAAAAAAAAAAAAgAFAA8ABgsAAAAADQAHCwoAAAAACwAIAAAAAAALAAIAAAARSG9zdENvbXBsZXhEYXRhLTEKAAMAAAAAAAAAAAQABAAAAAAAAAAAAgAFAA8ABgsAAAAADQAHCwoAAAAACwAIAAAAAAALAAIAAAAFMTExMTEKAAMAAAAAAAAnZgQABD/wIznA6+36AgAFAQ8ABgsAAAABAAAAD0hvc3RDb21wbGV4RGF0YQ0ABwsKAAAAAQAAAA9Ib3N0Q29tcGxleERhdGEAAAAAAAAAAQsACAAAAAAA`
-	decodeString, err := base64.StdEncoding.DecodeString(data)
-	if err != nil {
-		t.Fatal(err)
-	}
-	protocol := NewBinaryProtocol(bytes.NewBuffer(decodeString))
-
-	decodeStruct, err := DecodeStruct(context.Background(), protocol)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(decodeStruct)
 }

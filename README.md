@@ -98,7 +98,7 @@ Flags:
   -v, --verbose       Enable Display decoded details.
 ```
 
-protoc-gen-console
+# protoc-gen-console
 
 > 将protoc输出到文件中
 
