@@ -14,15 +14,13 @@ type Message interface {
 type MessageType string
 
 const (
-	MessageType_Unknown   = "Unknown"
-	MessageType_Log       = "Log"
-	MessageType_TcpPacket = "TcpPacket"
-	MessageType_HTTP      = "HTTP"
-	MessageType_Thrift    = "Thrift"
-	MessageType_Layer     = "Layer"
-
-	MessageType_TcpdumpHeader  = "TcpdumpHeader"
-	MessageType_TcpdumpPayload = "TcpdumpPayload"
+	MessageType_Unknown   = "unknown"
+	MessageType_Log       = "log"
+	MessageType_TcpPacket = "tcp"
+	MessageType_HTTP      = "http"
+	MessageType_Thrift    = "thrift"
+	MessageType_Layer     = "layer"
+	MessageType_Tcpdump   = "tcpdump"
 )
 
 var _ Message = (*UnknownMessage)(nil)
@@ -62,7 +60,7 @@ type TcpdumpHeader struct {
 }
 
 func (*TcpdumpHeader) Type() MessageType {
-	return MessageType_TcpdumpHeader
+	return MessageType_Tcpdump
 }
 
 func (m *TcpdumpHeader) String() string {
@@ -74,7 +72,7 @@ type TcpdumpPayload struct {
 }
 
 func (*TcpdumpPayload) Type() MessageType {
-	return MessageType_TcpdumpPayload
+	return MessageType_Tcpdump
 }
 
 func (m *TcpdumpPayload) String() string {

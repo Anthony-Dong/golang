@@ -50,13 +50,16 @@ const (
 	PacketSource_Unknown PacketSourceType = "Unknown"
 )
 
-func NewDecodeOptions() DecodeOptions {
+func NewDecodeOptions(ops ...DecodeOption) DecodeOptions {
 	options := DecodeOptions{
 		DecodeOptions: gopacket.DecodeOptions{
 			Lazy:                     false,
 			NoCopy:                   true,
 			DecodeStreamsAsDatagrams: true,
 		},
+	}
+	for _, op := range ops {
+		op(&options)
 	}
 	return options
 }

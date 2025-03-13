@@ -7,10 +7,11 @@ import (
 	"io"
 	"net/http"
 	"net/http/httputil"
+	"unsafe"
 
+	"github.com/anthony-dong/golang/pkg/utils"
 	"github.com/pkg/errors"
 
-	"github.com/anthony-dong/golang/pkg/bufutils"
 	"github.com/anthony-dong/golang/pkg/codec/http_codec"
 )
 
@@ -19,36 +20,93 @@ var _ Message = (*HttpMessage)(nil)
 type HttpMessage struct {
 	Req  *http.Request
 	Resp *http.Response
+
+	Host    string
+	RawData []byte
 }
 
 func (m *HttpMessage) String() string {
 	if m.Req != nil {
-		out, err := httputil.DumpRequestOut(m.Req, true)
-		if err != nil {
-			return err.Error()
+		if m.enableDumpRequest(m.Req) {
+			if req, err := DumpRequest(m.Req); err == nil {
+				return UnsafeString(req)
+			}
 		}
-		return string(out)
+		return UnsafeString(m.RawData)
 	}
-	out, err := httputil.DumpResponse(m.Resp, true)
+	if m.enableDumpResponse(m.Resp) {
+		if resp, err := DumpResponse(m.Resp); err == nil {
+			return UnsafeString(resp)
+		}
+	}
+	return UnsafeString(m.RawData)
+}
+
+func UnsafeString(buf []byte) string {
+	return *(*string)(unsafe.Pointer(&buf))
+}
+
+func (m *HttpMessage) enableDumpRequest(req *http.Request) bool {
+	if encoding := req.Header.Get("Content-Encoding"); encoding != "" {
+		return req.ContentLength > 0
+	}
+	return false
+}
+
+func (m *HttpMessage) enableDumpResponse(resp *http.Response) bool {
+	if encoding := resp.Header.Get("Content-Encoding"); encoding != "" {
+		return resp.ContentLength > 0
+	}
+	if utils.Contains(resp.TransferEncoding, "chunked") {
+		return true
+	}
+	return false
+}
+
+func DumpRequest(req *http.Request) ([]byte, error) {
+	body, err := http_codec.DecodeHttpBody(req.Body, req.Header, true)
 	if err != nil {
-		return err.Error()
+		return nil, err
 	}
-	return string(out)
+	dumpRequest, err := httputil.DumpRequest(req, false)
+	if err != nil {
+		return nil, err
+	}
+	writer := bytes.NewBuffer(dumpRequest)
+	writer.Write(body)
+	return writer.Bytes(), nil
+}
+
+func DumpResponse(resp *http.Response) ([]byte, error) {
+	body, err := http_codec.DecodeHttpBody(resp.Body, resp.Header, true)
+	if err != nil {
+		return nil, err
+	}
+	dumpResponse, err := httputil.DumpResponse(resp, false)
+	if err != nil {
+		return nil, err
+	}
+	writer := bytes.NewBuffer(dumpResponse)
+	writer.Write(body)
+	return writer.Bytes(), nil
 }
 
 func (*HttpMessage) Type() MessageType {
 	return MessageType_HTTP
 }
 
-func NewHttpReqMessage(req *http.Request) *HttpMessage {
+func NewHttpReqMessage(req *http.Request, rawData []byte, host string) *HttpMessage {
 	return &HttpMessage{
-		Req: req,
+		Req:     req,
+		RawData: rawData,
+		Host:    host,
 	}
 }
 
-func NewHttpRespMessage(resp *http.Response) *HttpMessage {
+func NewHttpRespMessage(resp *http.Response, rawData []byte) *HttpMessage {
 	return &HttpMessage{
-		Resp: resp,
+		Resp:    resp,
+		RawData: rawData,
 	}
 }
 
@@ -59,8 +117,6 @@ type HttpDecoder struct{}
 func NewHttpDecoder() Decoder {
 	return &HttpDecoder{}
 }
-
-var strCRLF = []byte("\r\n")
 
 func (h *HttpDecoder) Decode(ctx context.Context, reader Reader, packet *TcpPacket) (Message, error) {
 	crlfNum := 0 // /r/n 换行符， http协议分割符号本质上是换行符！所以清除头部的换行符(假如存在这种case)
@@ -93,32 +149,34 @@ func (h *HttpDecoder) Decode(ctx context.Context, reader Reader, packet *TcpPack
 		if err != nil {
 			return nil, errors.Wrap(err, `read http request content err`)
 		}
-		return NewHttpReqMessage(req), nil
+		return NewHttpReqMessage(req, copyR.Bytes(), packet.Src), nil
 	}
 
 	isResponse, err := isHttpResponse(ctx, reader)
 	if err != nil {
 		return nil, errors.Wrap(err, `read http response content error`)
 	}
-	if isResponse {
-		resp, err := http.ReadResponse(bufReader, nil)
+	if !isResponse {
+		return nil, errors.Errorf(`invalid http content`)
+	}
+	resp, err := http.ReadResponse(bufReader, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, `read http response content error`)
+	}
+	if resp.ContentLength > 0 {
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, errors.Wrap(err, `read http response content error`)
 		}
-		if len(resp.TransferEncoding) > 0 && resp.TransferEncoding[0] == "chunked" {
-			chunked, err := http_codec.ReadChunked(bufReader)
-			if err != nil {
-				_ = resp.Body.Close()
-				return nil, errors.Wrap(err, `read http response content error, transfer encoding is chunked`)
-			}
-			_ = resp.Body.Close()
-			buffer := bufutils.NewBufferData(chunked)
-			defer bufutils.ResetBuffer(buffer)
-			resp.Body = io.NopCloser(buffer) // copy
+		resp.Body = io.NopCloser(bytes.NewBuffer(body))
+	} else if utils.Contains(resp.TransferEncoding, "chunked") {
+		chunked, err := http_codec.ReadChunked(bufReader)
+		if err != nil {
+			return nil, errors.Wrap(err, `read http response content error, transfer encoding is chunked`)
 		}
-		return NewHttpRespMessage(resp), nil
+		resp.Body = io.NopCloser(bytes.NewBuffer(chunked)) // copy
 	}
-	return nil, errors.Errorf(`invalid http content`)
+	return NewHttpRespMessage(resp, copyR.Bytes()), nil
 }
 
 func (h *HttpDecoder) Name() string {

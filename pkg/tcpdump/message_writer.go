@@ -2,7 +2,6 @@ package tcpdump
 
 import (
 	"fmt"
-	"strings"
 )
 
 type MessageWriter interface {
@@ -21,11 +20,23 @@ func NewConsoleLogMessageWriter(enable []MessageType) MessageWriter {
 		enableMap[m] = true
 	}
 	return &consoleLogMessageWriter{enable: enableMap}
+}
 
+func ConvertToMessageType(input []string) []MessageType {
+	result := make([]MessageType, len(input))
+	for i, s := range input {
+		result[i] = MessageType(s)
+	}
+	return result
 }
 
 func (c *consoleLogMessageWriter) Write(msg Message) {
 	if c.enable[msg.Type()] {
-		fmt.Println(strings.TrimSpace(msg.String()))
+		output := msg.String()
+		if len(output) > 0 && output[len(output)-1] == '\n' {
+			fmt.Printf(output)
+		} else {
+			fmt.Println(output)
+		}
 	}
 }

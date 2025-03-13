@@ -29,8 +29,9 @@ func joinCommand(name string) string {
 
 func NewCommand(name string, ops ...DecodeOption) (*cobra.Command, error) {
 	var (
-		filename string
-		verbose  bool
+		filename       string
+		verbose        bool
+		filterMsgTypes []string
 	)
 	cmd := &cobra.Command{
 		Use:   fmt.Sprintf(`%s [-r file] [-v]`, name),
@@ -41,23 +42,22 @@ func NewCommand(name string, ops ...DecodeOption) (*cobra.Command, error) {
  - 抓取流量: tcpdump 'port 8888' -w xxx.pcap
  - 分析流量: %[1]s -r xxx.pcap`, joinCommand(name)),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			option := NewDecodeOptions()
-			for _, op := range ops {
-				op(&option)
-			}
+			option := NewDecodeOptions(ops...)
 			if option.MsgWriter == nil {
-				msgTypes := make([]tcpdump.MessageType, 0)
-				msgTypes = append(msgTypes, tcpdump.MessageType_Thrift, tcpdump.MessageType_HTTP)
-				switch GetPacketSourceType(filename) {
-				case PacketSource_Consul:
-					msgTypes = append(msgTypes, tcpdump.MessageType_TcpdumpPayload, tcpdump.MessageType_TcpdumpHeader)
-				case PacketSource_File:
-					msgTypes = append(msgTypes, tcpdump.MessageType_TcpPacket)
+				if len(filterMsgTypes) == 0 {
+					filterMsgTypes = append(filterMsgTypes, tcpdump.MessageType_Thrift, tcpdump.MessageType_HTTP)
+					switch GetPacketSourceType(filename) {
+					case PacketSource_Consul:
+						filterMsgTypes = append(filterMsgTypes, tcpdump.MessageType_Tcpdump)
+					case PacketSource_File:
+						filterMsgTypes = append(filterMsgTypes, tcpdump.MessageType_TcpPacket)
+					}
+					if verbose {
+						filterMsgTypes = append(filterMsgTypes, tcpdump.MessageType_Log)
+					}
 				}
-				if verbose {
-					msgTypes = append(msgTypes, tcpdump.MessageType_Log)
-				}
-				option.MsgWriter = tcpdump.NewConsoleLogMessageWriter(msgTypes)
+				logs.CtxInfo(cmd.Context(), "filter msg type: %s", utils.ToJson(filterMsgTypes))
+				option.MsgWriter = tcpdump.NewConsoleLogMessageWriter(tcpdump.ConvertToMessageType(filterMsgTypes))
 			}
 			if len(option.Decoders) == 0 {
 				option.Decoders = append(option.Decoders, tcpdump.NewThriftDecoder(), tcpdump.NewHttpDecoder())
@@ -69,8 +69,9 @@ func NewCommand(name string, ops ...DecodeOption) (*cobra.Command, error) {
 			return DecodePacketSource(cmd.Context(), source, option)
 		},
 	}
-	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose mode")
-	cmd.Flags().StringVarP(&filename, "file", "r", "", "读取tcpdump抓取的文件")
+	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "开启DEBUG模式, 会打印一些DEBUG信息")
+	cmd.Flags().StringVarP(&filename, "file", "r", "", "读取tcpdump抓取的pcap文件")
+	cmd.Flags().StringArrayVarP(&filterMsgTypes, "filter", "f", []string{}, "过滤消息类型(thrift/http/log/tcpdump)")
 	return cmd, nil
 }
 

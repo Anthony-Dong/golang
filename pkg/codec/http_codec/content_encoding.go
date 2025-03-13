@@ -2,7 +2,6 @@ package http_codec
 
 import (
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/anthony-dong/golang/pkg/utils"
@@ -45,7 +44,7 @@ func DecodeHttpBody(r io.Reader, header Header, resolveDefault bool) ([]byte, er
 		decoder = codec.NewCodec(codec.NewSnappyCodec())
 	default:
 		if resolveDefault {
-			return ioutil.ReadAll(r)
+			return io.ReadAll(r)
 		}
 		return nil, nil
 	}
@@ -54,6 +53,7 @@ func DecodeHttpBody(r io.Reader, header Header, resolveDefault bool) ([]byte, er
 	if err := decoder.Decode(r, buffer); err != nil {
 		return nil, err
 	}
+	//fmt.Println(base64.StdEncoding.EncodeToString(buffer.Bytes()))
 	return bufutils.CopyBufferBytes(buffer), nil
 }
 
