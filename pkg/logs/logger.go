@@ -31,9 +31,19 @@ func SetWriter(w io.Writer) {
 }
 
 func init() {
-	for _, elem := range os.Args {
+	for level, str := range levelStringMap {
+		stringLevelMap[str] = level
+	}
+
+	for index, elem := range os.Args {
 		if elem == "-v" || elem == "--verbose" {
 			SetLevel(LevelDebug)
+		}
+		// --log-level debug
+		if elem == "--log-level" {
+			if index+1 < len(os.Args) {
+				SetLevelString(os.Args[index+1])
+			}
 		}
 	}
 }
@@ -69,7 +79,7 @@ func SetLevel(level Level) {
 }
 
 func SetLevelString(level string) {
-	ll, isExist := stringLevelMap[level]
+	ll, isExist := stringLevelMap[strings.ToLower(level)]
 	if !isExist {
 		return
 	}
@@ -112,12 +122,6 @@ var (
 	}
 	stringLevelMap = map[string]Level{}
 )
-
-func init() {
-	for level, str := range levelStringMap {
-		stringLevelMap[str] = level
-	}
-}
 
 func (l Level) String() string {
 	str, isExist := levelStringMap[l]

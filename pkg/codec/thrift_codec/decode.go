@@ -75,7 +75,7 @@ func DecodeMessage(ctx context.Context, iprot thrift.TProtocol) (*ThriftMessage,
 		}
 		result.Payload = decodeStruct
 	case thrift.INVALID_TMESSAGE_TYPE:
-		logs.CtxInfo(ctx, "[DecodeRespMessage] not handler message type: %v, method_name: %s", messageType, name)
+		logs.CtxDebug(ctx, "[DecodeRespMessage] not handler message type: %v, method_name: %s", messageType, name)
 	}
 	if err := iprot.ReadMessageEnd(); err != nil {
 		return nil, err
