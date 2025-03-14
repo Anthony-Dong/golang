@@ -27,7 +27,7 @@ func joinCommand(name string) string {
 	return cmd + " " + name
 }
 
-func NewCommand(name string, ops ...DecodeOption) (*cobra.Command, error) {
+func NewCommand(name string, cmdOption func(command *cobra.Command), ops ...DecodeOption) (*cobra.Command, error) {
 	var (
 		filename       string
 		verbose        bool
@@ -68,6 +68,9 @@ func NewCommand(name string, ops ...DecodeOption) (*cobra.Command, error) {
 			}
 			return DecodePacketSource(cmd.Context(), source, option)
 		},
+	}
+	if cmdOption != nil {
+		cmdOption(cmd)
 	}
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "开启DEBUG模式, 会打印一些DEBUG信息")
 	cmd.Flags().StringVarP(&filename, "file", "r", "", "读取tcpdump抓取的pcap文件")

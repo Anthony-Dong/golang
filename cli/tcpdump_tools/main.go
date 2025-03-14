@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	command, err := tcpdump.NewCommand(filepath.Base(os.Args[0]))
+	command, err := tcpdump.NewCommand(filepath.Base(os.Args[0]), nil)
 	if err != nil {
 		exitError(err)
 	}
