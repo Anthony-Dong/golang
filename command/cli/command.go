@@ -35,7 +35,7 @@ import (
 	"github.com/anthony-dong/golang/command/upload"
 )
 
-func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
+func NewCommand(config *command.AppConfig, ops ...func(cmd *cobra.Command)) (*cobra.Command, error) {
 	if config == nil {
 		config = &command.AppConfig{}
 	}
@@ -70,6 +70,9 @@ func NewCommand(config *command.AppConfig) (*cobra.Command, error) {
 			}
 			return nil
 		},
+	}
+	for _, op := range ops {
+		op(cmd)
 	}
 	cmd.SetHelpTemplate(command.HelpTmpl)
 	cmd.SetUsageTemplate(command.UsageTmpl)
