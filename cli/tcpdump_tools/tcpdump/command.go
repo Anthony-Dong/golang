@@ -45,7 +45,7 @@ func NewCommand(name string, cmdOption func(command *cobra.Command), ops ...Deco
 			option := NewDecodeOptions(ops...)
 			if option.MsgWriter == nil {
 				if len(filterMsgTypes) == 0 {
-					filterMsgTypes = append(filterMsgTypes, tcpdump.MessageType_Thrift, tcpdump.MessageType_HTTP)
+					filterMsgTypes = append(filterMsgTypes, tcpdump.MessageType_Thrift, tcpdump.MessageType_HTTP, tcpdump.MessageType_HTTP2)
 					switch GetPacketSourceType(filename) {
 					case PacketSource_Consul:
 						filterMsgTypes = append(filterMsgTypes, tcpdump.MessageType_Tcpdump)
@@ -60,7 +60,7 @@ func NewCommand(name string, cmdOption func(command *cobra.Command), ops ...Deco
 				option.MsgWriter = tcpdump.NewConsoleLogMessageWriter(tcpdump.ConvertToMessageType(filterMsgTypes))
 			}
 			if len(option.Decoders) == 0 {
-				option.Decoders = append(option.Decoders, tcpdump.NewThriftDecoder(), tcpdump.NewHttpDecoder())
+				option.Decoders = append(option.Decoders, tcpdump.NewThriftDecoder(), tcpdump.NewHttpDecoder(), tcpdump.NewHttp2Decoder())
 			}
 			source, err := NewPacketSource(filename, option)
 			if err != nil {

@@ -8,12 +8,11 @@ import (
 )
 
 func TestDecodeHTTP(t *testing.T) {
-	return
-	file := "test/out3.pcap"
+	file := "test/out_kitex_big.pcap"
 
-	option := NewDecodeOptions(WithDecoder(tcpdump.NewHttpDecoder()), WithMsgWriter(tcpdump.NewConsoleLogMessageWriter([]tcpdump.MessageType{
+	option := NewDecodeOptions(WithDecoder(tcpdump.NewHttp2Decoder()), WithMsgWriter(tcpdump.NewConsoleLogMessageWriter([]tcpdump.MessageType{
 		tcpdump.MessageType_Log,
-		tcpdump.MessageType_HTTP,
+		tcpdump.MessageType_HTTP2,
 	})))
 	source, err := NewPacketSource(file, option)
 	if err != nil {
