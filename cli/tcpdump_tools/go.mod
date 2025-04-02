@@ -3,7 +3,7 @@ module github.com/anthony-dong/golang/cli/tcpdump_tools
 go 1.18
 
 require (
-	github.com/anthony-dong/golang v0.0.15
+	github.com/anthony-dong/golang v0.0.18
 	github.com/fatih/color v1.17.0
 	github.com/google/gopacket v1.1.19
 	github.com/pkg/errors v0.9.1
@@ -60,5 +60,3 @@ require (
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/anthony-dong/golang => ../..
