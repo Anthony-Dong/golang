@@ -11,9 +11,26 @@ type Message interface {
 	String() string
 }
 
+type MultiMessage struct {
+	Messages []Message
+}
+
+func NewMultiMessage(msg []Message) *MultiMessage {
+	return &MultiMessage{Messages: msg}
+}
+
+func (*MultiMessage) Type() MessageType {
+	return MessageType_Multi
+}
+
+func (*MultiMessage) String() string {
+	return "MultiMessage"
+}
+
 type MessageType string
 
 const (
+	MessageType_Multi     = "multi"
 	MessageType_Unknown   = "unknown"
 	MessageType_Log       = "log"
 	MessageType_TcpPacket = "tcp"
@@ -21,6 +38,8 @@ const (
 	MessageType_Thrift    = "thrift"
 	MessageType_Layer     = "layer"
 	MessageType_Tcpdump   = "tcpdump"
+
+	MessageType_HTTP2 = "http2"
 )
 
 var _ Message = (*UnknownMessage)(nil)

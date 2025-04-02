@@ -1,6 +1,8 @@
 package thrift_codec
 
 import (
+	"bytes"
+	"context"
 	"fmt"
 
 	"github.com/cloudwego/kitex/pkg/generic/descriptor"
@@ -22,6 +24,22 @@ func convertToOrderMap(data interface{}) (*orderedmap.OrderedMap, error) {
 		return result, nil
 	}
 	return nil, fmt.Errorf("convert ordered map find err: unknown type %T", data)
+}
+
+func DecodeThriftData(payload []byte) (*FieldOrderMap, error) {
+	protocol := NewTProtocol(bytes.NewBuffer(payload), UnframedBinary)
+	return DecodeStruct(context.Background(), protocol)
+}
+
+func DecodeThriftDataToJson(method string, payload *FieldOrderMap, thriftIdl *descriptor.ServiceDescriptor, isReq bool) (interface{}, error) {
+	function, err := lookupThriftFunc(thriftIdl, method)
+	if err != nil {
+		return nil, err
+	}
+	if isReq {
+		return decodePayload(payload, function.Request)
+	}
+	return decodePayload(payload, function.Response)
 }
 
 func DecodeThriftMessage(msg *ThriftMessage, thriftIdl *descriptor.ServiceDescriptor) (interface{}, error) {

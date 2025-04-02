@@ -142,7 +142,14 @@ func (c *PacketDecoder) decode(ctx context.Context, packet *TcpPacket, payload [
 }
 
 func (c *PacketDecoder) writeMessage(msg Message) {
-	c.writer.Write(msg)
+	switch v := msg.(type) {
+	case *MultiMessage:
+		for _, elem := range v.Messages {
+			c.writer.Write(elem)
+		}
+	default:
+		c.writer.Write(msg)
+	}
 }
 
 // IpPort 支持 ipv6:port, [ipv6]:port, ip:port
