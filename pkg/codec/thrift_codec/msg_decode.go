@@ -37,9 +37,9 @@ func DecodeThriftDataToJson(method string, payload *FieldOrderMap, thriftIdl *de
 		return nil, err
 	}
 	if isReq {
-		return decodePayload(payload, function.Request)
+		return decodePayload(payload, function.Request.Struct.FieldsByName["req"].Type)
 	}
-	return decodePayload(payload, function.Response)
+	return decodePayload(payload, function.Response.Struct.FieldsByName[""].Type)
 }
 
 func DecodeThriftMessage(msg *ThriftMessage, thriftIdl *descriptor.ServiceDescriptor) (interface{}, error) {
