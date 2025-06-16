@@ -7,7 +7,7 @@ import (
 )
 
 func NewCommand() (*cobra.Command, error) {
-	cmd := &cobra.Command{Use: "tcp", Short: "a tcp tools"}
+	cmd := &cobra.Command{Use: "tcp", Short: "TCP related tools"}
 	if err := command.AddCommand(cmd, NewEchoServiceCommand); err != nil {
 		return nil, err
 	}

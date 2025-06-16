@@ -23,7 +23,7 @@ func NewCurlCommand(configProvider func() *command.CurlConfig) (*cobra.Command, 
 	enableModifyReq := false
 	cmd := &cobra.Command{
 		Use:     "curl",
-		Short:   `Send thrift like curl`,
+		Short:   "Send Thrift requests similar to cURL",
 		Example: `curl --url 'thrift://xxx.xxx.xxx/RPCMethod?addr=localhost:8888&env=prod&cluster=default' --header 'h1: v1' --header 'h2: v2' --data '{"k1": "v1"} -v'`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()

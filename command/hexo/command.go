@@ -13,7 +13,7 @@ import (
 )
 
 func NewCommand(config func() *command.HexoConfig) (*cobra.Command, error) {
-	cmd := &cobra.Command{Use: "hexo", Short: "The Hexo tool"}
+	cmd := &cobra.Command{Use: "hexo", Short: "Hexo static site generator tools"}
 	if err := command.AddCommandWithConfig(cmd, config, NewBuildCmd); err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func NewBuildCmd(configProvider func() *command.HexoConfig) (*cobra.Command, err
 	var (
 		cfg = &hexoConfig{}
 	)
-	cmd := &cobra.Command{Use: "build", Short: "Build the markdown project to hexo"}
+	cmd := &cobra.Command{Use: "build", Short: "Build a markdown project for Hexo"}
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		config := configProvider()
 		if config == nil {

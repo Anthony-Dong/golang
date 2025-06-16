@@ -13,12 +13,11 @@ import (
 	"github.com/anthony-dong/golang/pkg/codec/pb_codec/codec"
 )
 
-// echo "CgVoZWxsbxCIBEIDCIgE" | bin/gtool codec base64 --decode | bin/gtool codec pb | jq
 func newPBCodecCmd() (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:     "pb",
-		Short:   "decode protobuf protocol binary message",
-		Example: `echo "CgVoZWxsbxCIBEIDCIgE" | devtool codec base64 --decode | devtool codec pb | jq`,
+		Short:   "Decode Protocol Buffer (Protobuf) binary messages",
+		Example: `echo "CgVoZWxsbxCIBEIDCIgE" | devtool codec pb`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !utils.CheckStdInFromPiped() {
 				return cmd.Help()

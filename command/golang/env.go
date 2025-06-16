@@ -17,7 +17,8 @@ import (
 func NewGoEnvCommand() (*cobra.Command, error) {
 	version := ""
 	cmd := &cobra.Command{
-		Use: "env",
+		Use:   "env",
+		Short: "Display Go environment information",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !isVersion(version) {
 				return fmt.Errorf(`invalid version: %s`, version)

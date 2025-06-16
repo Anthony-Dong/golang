@@ -15,7 +15,7 @@ func NewFileSystemCommand() (*cobra.Command, error) {
 	fileSystemDir := ""
 	cmd := &cobra.Command{
 		Use:   "fs",
-		Short: "FileSystem Proxy tool",
+		Short: "File system proxy tool",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			port, err := utils.GetPort(listenAddr)

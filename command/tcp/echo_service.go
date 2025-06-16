@@ -20,7 +20,7 @@ func NewEchoServiceCommand() (*cobra.Command, error) {
 	isNetpoll := false
 	command := &cobra.Command{
 		Use:   "echo_service",
-		Short: "create a tcp echo service",
+		Short: "Create a TCP echo service",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if isNetpoll {
 				return newNetPollEchoService(cmd.Context(), addr)

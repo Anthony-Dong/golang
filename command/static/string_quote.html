@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字符串转义工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px;
+            /* 减小内边距 */
+            text-align: center;
+            display: flex;
+            /* 使用flex布局 */
+            justify-content: center;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 24px;
+            /* 减小标题字体大小 */
+            margin: 0 20px 0 0;
+            /* 给标题右侧添加间距 */
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+        }
+
+        #inputArea,
+        #outputArea {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        textarea {
+            flex: 1;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: none;
+            box-sizing: border-box;
+        }
+
+        label {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .buttonRow {
+            display: flex;
+            margin-top: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+            color: #fff;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        button:last-child {
+            margin-right: 0;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .alert-box {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px 20px;
+            background-color: #f4f4f9;
+            color: #333;
+            border-radius: 4px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            text-align: center;
+        }
+    </style>
+    <script>
+        function encode() {
+            let input = document.getElementById('inputText').value;
+            try {
+                document.getElementById('outputText').value = JSON.stringify(input);
+            } catch (e) {
+                alert('Invalid encode string: ' + e.toString());
+            }
+        }
+
+        function decode() {
+            let input = document.getElementById('inputText').value;
+            try {
+                document.getElementById('outputText').value = JSON.parse(input);
+            } catch (e) {
+                alert('Invalid decode string: ' + e.toString());
+            }
+        }
+
+        function copyToClipboard() {
+            let outputText = document.getElementById('outputText').value;
+            navigator.clipboard.writeText(outputText)
+                .then(() => {
+                    alert("拷贝成功")
+                })
+                .catch(err => {
+                    alert('Failed to copy text: ' + err.toString());
+                });
+        }
+    </script>
+</head>
+
+<body>
+<header>
+    <h1>字符串 Double Quote 工具</h1>
+    <!--    <a href="/index.html" style="color: white; text-decoration: none;">-->
+    <!--        <button style="background-color: white; color: #007BFF; border: none; padding: 10px 20px; cursor: pointer;">-->
+    <!--            首页-->
+    <!--        </button>-->
+    <!--    </a>-->
+</header>
+<!--<div id="alertBox" class="alert-box" style="display:none;">Text copied to clipboard!</div>-->
+
+<div class="main-content">
+    <div id="inputArea">
+        <label for="inputText">Input Text:</label>
+        <textarea id="inputText"></textarea>
+        <div class="buttonRow">
+            <button onclick="encode()">Encode</button>
+            <button onclick="decode()">Decode</button>
+        </div>
+    </div>
+    <div id="outputArea">
+        <label for="outputText">Output Text:</label>
+        <textarea id="outputText" readonly></textarea>
+        <div class="buttonRow">
+            <button onclick="copyToClipboard()">Copy to Clipboard</button>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>

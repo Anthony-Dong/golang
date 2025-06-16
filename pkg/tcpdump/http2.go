@@ -5,9 +5,10 @@ import (
 	"context"
 	"net/http"
 
+	"golang.org/x/net/http2"
+
 	http2_codec "github.com/anthony-dong/golang/pkg/codec/http2"
 	"github.com/anthony-dong/golang/pkg/utils"
-	"golang.org/x/net/http2"
 )
 
 var _ Decoder = (*Http2Decoder)(nil)

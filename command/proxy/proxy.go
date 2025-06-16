@@ -18,7 +18,7 @@ import (
 func NewCommand() (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "proxy",
-		Short: "HTTP/HTTPS/Thrift/FileSystem proxy tool",
+		Short: "HTTP/HTTPS, Thrift, and FileSystem proxy tools",
 	}
 	if err := command.AddCommand(cmd, NewHTTPCommand); err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func NewHTTPCommand() (*cobra.Command, error) {
 	listenAddr := ""
 	cmd := &cobra.Command{
 		Use:   "http",
-		Short: `HTTP/HTTPS proxy tool`,
+		Short: "HTTP/HTTPS proxy tool",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			port := ""
 			if index := strings.LastIndex(listenAddr, ":"); index != -1 {
@@ -80,7 +80,7 @@ func NewThriftCommand() (*cobra.Command, error) {
 	dialAddr := ""
 	cmd := &cobra.Command{
 		Use:   "thrift",
-		Short: `Thrift proxy tool`,
+		Short: "Thrift proxy tool",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			return proxy.NewProxy(listenAddr, proxy.NewThriftHandler(dialAddr, record.NewConsulStorage())).Run()
 		},

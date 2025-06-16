@@ -12,7 +12,7 @@ import (
 func NewJson2YamlCmd() (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "json2yaml",
-		Short: `convert json to yaml`,
+		Short: "Convert JSON data to YAML format",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !utils.CheckStdInFromPiped() {
 				return cmd.Help()
@@ -37,7 +37,7 @@ func NewJson2YamlCmd() (*cobra.Command, error) {
 func NewYaml2JsonCmd() (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "yaml2json",
-		Short: `convert yaml to json`,
+		Short: "Convert YAML data to JSON format",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !utils.CheckStdInFromPiped() {
 				return cmd.Help()

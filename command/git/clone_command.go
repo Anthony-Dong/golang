@@ -16,8 +16,8 @@ import (
 func NewGitCloneCommand() (*cobra.Command, error) {
 	home := ""
 	cmd := &cobra.Command{
-		Use:   "clone [url] [--branch branch] [--depth 1]",
-		Short: "fast git clone repo",
+		Use:   "clone [url] -- [--branch branch] [--depth 1]",
+		Short: "Fast git clone",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return fmt.Errorf(`invalid repo name`)

@@ -17,7 +17,7 @@ import (
 func NewCommand() (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "diff",
-		Short: "diff anything",
+		Short: "Diff utilities for various data formats",
 	}
 	if err := command.AddCommand(cmd, NewJsonDiff); err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func NewCommand() (*cobra.Command, error) {
 func NewJsonDiff() (*cobra.Command, error) {
 	return &cobra.Command{
 		Use:   "json",
-		Short: "diff json",
+		Short: "Diff JSON files or data",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 3 {
 				file, err := os.ReadFile(args[0])

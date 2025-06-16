@@ -19,7 +19,7 @@ import (
 func NewListGoModSize() (*cobra.Command, error) {
 	return &cobra.Command{
 		Use:   "mod-size",
-		Short: `list mod size`,
+		Short: "List Go module sizes",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			mod, err := ListMod(utils.GetPwd())
 			if err != nil {

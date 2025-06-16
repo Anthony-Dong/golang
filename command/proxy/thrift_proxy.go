@@ -17,7 +17,7 @@ import (
 func NewThriftProxyCommand(cfg func() *command.CurlConfig) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "thrift_proxy",
-		Short: "Thrift proxy tool",
+		Short: "Thrift proxy tool with request/response inspection",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ips, err := utils.GetAllIP(true)
 			if err != nil {

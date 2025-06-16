@@ -13,7 +13,7 @@ func NewCommand() (*cobra.Command, error) {
 	var key string
 	cmd := &cobra.Command{
 		Use:   "wal",
-		Short: "the wal command",
+		Short: "Commands for interacting with Write-Ahead Log (WAL) files",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			file, err := wal.OpenFile(filename)
 			if err != nil {

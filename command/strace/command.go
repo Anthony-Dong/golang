@@ -5,7 +5,7 @@ import "github.com/spf13/cobra"
 func NewCommand() (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "strace",
-		Short: "strace commands",
+		Short: "Trace system calls and signals",
 		Example: `
 1. sudo strace -p <pid> -tt -f -y -s <strsize> -e <expr1,expr2>
 

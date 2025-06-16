@@ -26,7 +26,7 @@ type uploadCommand struct {
 }
 
 func NewCommand(config func() *command.UploadConfig) (*cobra.Command, error) {
-	cmd := &cobra.Command{Use: "upload", Short: `File upload tool`}
+	cmd := &cobra.Command{Use: "upload", Short: "File upload utility"}
 	var (
 		cfg = &uploadCommand{}
 	)

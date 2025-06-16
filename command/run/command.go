@@ -28,7 +28,7 @@ func NewCommand(configProvider func() *command.RunTaskConfig) (*cobra.Command, e
 	includes := make([]string, 0)
 	run := &cobra.Command{
 		Use:   "run",
-		Short: `Run task templates`,
+		Short: "Run tasks defined in template files",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			config := configProvider()
 			if config == nil {

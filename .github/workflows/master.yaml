@@ -35,8 +35,6 @@ jobs:
         run: sudo apt-get update; sudo apt-get install libpcap-dev # install libpcap for gopcap-sdk
       - name: Show Project ...
         run: ls -al
-      - name: Compile-cors
-        run: make cors
       - name: Compile-build
         run: make build
       - name: Test

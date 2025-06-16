@@ -8,7 +8,7 @@ import (
 
 func NewCommand() (*cobra.Command, error) {
 
-	cmd := &cobra.Command{Use: "mock", Short: "gen mock data"}
+	cmd := &cobra.Command{Use: "mock", Short: "Generate mock data for various formats"}
 
 	if err := command.AddCommand(cmd, NewThriftStructMock); err != nil {
 		return nil, err

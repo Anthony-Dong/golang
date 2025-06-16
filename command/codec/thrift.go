@@ -27,8 +27,8 @@ func newThriftCodecCmd() (*cobra.Command, error) {
 	}
 	cmd := &cobra.Command{
 		Use:     "thrift",
-		Short:   "decode thrift protocol binary message",
-		Example: `	echo "AAAAEYIhAQRUZXN0HBwWAhUCAAAA" | devtool codec base64 --decode | devtool codec thrift | jq`,
+		Short:   "Decode Thrift protocol binary messages",
+		Example: `	echo "AAAAEYIhAQRUZXN0HBwWAhUCAAAA" | devtool codec thrift`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !utils.CheckStdInFromPiped() {
 				return cmd.Help()

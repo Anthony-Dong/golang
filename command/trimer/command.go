@@ -1,4 +1,4 @@
-package git
+package trimer
 
 import (
 	"github.com/spf13/cobra"
@@ -8,10 +8,10 @@ import (
 
 func NewCommand() (*cobra.Command, error) {
 	cmd := &cobra.Command{
-		Use:   "git",
-		Short: "Git related tools and utilities",
+		Use:   "trimer",
+		Short: "Trim or filter data from various formats",
 	}
-	if err := command.AddCommand(cmd, NewGitCloneCommand); err != nil {
+	if err := command.AddCommand(cmd, NewJsonTrimerCommand); err != nil {
 		return nil, err
 	}
 	return cmd, nil

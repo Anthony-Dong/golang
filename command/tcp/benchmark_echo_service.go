@@ -27,7 +27,7 @@ func NewBenchmarkEchoServiceCommand() (*cobra.Command, error) {
 	runTime := time.Duration(0)
 	command := &cobra.Command{
 		Use:   "benchmark_echo_service",
-		Short: "benchmark echo service",
+		Short: "Benchmark a TCP echo service",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return benchmark(cmd.Context(), addr, maxConn, concurrent, newBuffer(payloadSize), runTime, interval)
 		},

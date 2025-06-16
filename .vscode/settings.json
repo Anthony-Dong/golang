@@ -8,5 +8,8 @@
         "**/Thumbs.db": true,
         "**/.idea": true,
     },
-    "gopls": { "ui.semanticTokens": true }
+    "gopls": {
+        "ui.semanticTokens": true
+    },
+    "cmake.ignoreCMakeListsMissing": true
 }

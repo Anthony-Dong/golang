@@ -17,7 +17,7 @@ func NewProtocCodec() (*cobra.Command, error) {
 	isMockProto := false
 	cmd := &cobra.Command{
 		Use:   "protoc",
-		Short: `decode FileDescriptorSet`,
+		Short: "Decode FileDescriptorSet from protoc output",
 		Example: `
 1. protoc --descriptor_set_out xxx.desc
 2. cat xxx.desc | devtool codec protoc`,

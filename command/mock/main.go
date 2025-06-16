@@ -16,7 +16,7 @@ func NewThriftStructMock() (*cobra.Command, error) {
 	structName := ""
 	cmd := &cobra.Command{
 		Use:   "thrift",
-		Short: `Generate Mock json data from thrift idl`,
+		Short: "Generate mock JSON data from Thrift IDL",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			value, err := GetThriftMockData(main, structName)
 			if err != nil {

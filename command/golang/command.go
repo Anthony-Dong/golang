@@ -2,8 +2,12 @@ package golang
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
+	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/anthony-dong/golang/command"
 
@@ -15,8 +19,8 @@ import (
 
 func NewCommand() (*cobra.Command, error) {
 	cmd := &cobra.Command{
-		Use:   "go",
-		Short: "The golang language tools",
+		Use:   "golang",
+		Short: "Go language related tools and utilities",
 	}
 	if err := command.AddCommand(cmd, NewGoRunCommand); err != nil {
 		return nil, err
@@ -30,7 +34,37 @@ func NewCommand() (*cobra.Command, error) {
 	if err := command.AddCommand(cmd, NewGoEnvCommand); err != nil {
 		return nil, err
 	}
+	if err := command.AddCommand(cmd, NewGolandInitCommand); err != nil {
+		return nil, err
+	}
 	return cmd, nil
+}
+
+func NewGolandInitCommand() (*cobra.Command, error) {
+	cmd := &cobra.Command{
+		Use:   "goland-init",
+		Short: "Initialize Goland project dependencies",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := RunCommand("go", "mod", "tidy"); err != nil {
+				return err
+			}
+
+			// go list -m -json -mod=mod all
+			return RunCommand("go", "list", "-m", "-json", "-mod=mod", "all")
+		},
+	}
+	return cmd, nil
+}
+
+func RunCommand(args ...string) error {
+	log.Printf("exec: %s\n", strings.Join(args, " "))
+	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return errors.Wrapf(err, "run command %v error", args)
+	}
+	return nil
 }
 
 func NewGoRunCommand() (*cobra.Command, error) {
@@ -39,7 +73,7 @@ func NewGoRunCommand() (*cobra.Command, error) {
 	runEnv := make([]string, 0)
 	cmd := &cobra.Command{
 		Use:   "run",
-		Short: `run golang project`,
+		Short: "Run Go programs",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var command *exec.Cmd
 			if isDebug {
@@ -68,7 +102,7 @@ func NewGoTestCommand() (*cobra.Command, error) {
 	isDebug := false
 	cmd := &cobra.Command{
 		Use:   "test",
-		Short: `test golang project`,
+		Short: "Run Go tests",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var command *exec.Cmd
 			if isDebug {

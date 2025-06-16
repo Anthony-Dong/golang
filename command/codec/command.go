@@ -17,7 +17,7 @@ import (
 func NewCommand() (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "codec",
-		Short: "The Encode and Decode data tool",
+		Short: "Tools for encoding and decoding data in various formats",
 	}
 	if err := command.AddCommand(cmd, newThriftCodecCmd); err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func newCodecCmd(name string, codec codec.Codec) *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:   name,
-		Short: fmt.Sprintf("%s codec", name),
+		Short: fmt.Sprintf("Encode or Decode data using %s codec", name),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			if !utils.CheckStdInFromPiped() {
 				return cmd.Help()
