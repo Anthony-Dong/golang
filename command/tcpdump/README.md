@@ -14,11 +14,6 @@
    L2-L7协议解析是用的[Go-Packet](https://github.com/google/gopacket) ！
 2. Go-[Packet](https://www.tcpdump.org/manpages/pcap.3pcap.html) 需要开启`CGO_ENABLED=1`
 
-```shell
-# linux(debian): sudo apt-get install -y libpcap-dev
-CGO_ENABLED=1 go install -v github.com/anthony-dong/golang/cli/tcpdump_tools@master
-```
-
 3. 注意Linux环境需要安装 `libpcap`, 例如我是Debian, 可以执行 `sudo apt-get install libpcap-dev`,
    具体可以参考:[pcap.h header file problem](https://stackoverflow.com/questions/5779784/pcap-h-header-file-problem) !
    mac 用户不需要！
@@ -35,10 +30,9 @@ CGO_ENABLED=1 go install -v github.com/anthony-dong/golang/cli/tcpdump_tools@mas
 - 支持tcpdump在线/离线流量解析
 
 ```shell
-➜  tcpdump_tools -h
 Name: decode tcpdump file, help doc: https://github.com/Anthony-Dong/go-sdk/tree/master/cli/tcpdump_tools
 
-Usage: tcpdump_tools [-r file] [-v] [-X] [--max dump size] [flags]
+Usage: tcpdump [-r file] [-v] [-X] [--max dump size] [flags]
 
 Examples: tcpdump 'port 8080' -X -l -n | devtool tcpdump_tools
 

@@ -2,25 +2,32 @@
 
 # 介绍
 
-devtool 是一个强大的Cli工具，其中包含了日常开发中的一些可能涉及到的高频工具，这里避免重复造轮子，所以一般就是日常用的一些工具但是市场上没有符合自己需求的，得自己写！
+devtool 是一个强大的开发者工具，其中包含了日常开发中的一些可能涉及到的高频工具，比如编解码工具、抓包工具、发送请求工具、代理工具、文件存储工具等！
 
 ```shell
-➜  devtool  --help      
+➜  git:(master) devtool 
+Name: A collection of development tools
+
 Usage: devtool [OPTIONS] COMMAND
 
 Commands:
-  codec       The Encode and Decode data tool
-  cpp         The cpp language tools
-  curl        Send thrift like curl
-  gen         Auto compile thrift、protobuf IDL
-  git         The git tools
-  go          The golang language tools
+  codec       Tools for encoding and decoding data in various formats
+  codegen     Generate code from IDL files (Thrift, Protobuf)
+  curl        Send Thrift requests similar to cURL
+  diff        Diff utilities for various data formats
+  git         Git related tools and utilities
+  golang      Go language related tools and utilities
   help        Help about any command
-  hexo        The Hexo tool
-  json        The Json tool
-  proxy       Proxy and Capture thrift/http/https requests
-  run         Run task templates
-  upload      File upload tool
+  hexo        Hexo static site generator tools
+  mock        Generate mock data for various formats
+  proxy       HTTP/HTTPS, Thrift, and FileSystem proxy tools
+  run         Run tasks defined in template files
+  static      Serve static files
+  strace      Trace system calls and signals
+  tcp         TCP related tools
+  trimer      Trim or filter data from various formats
+  upload      File upload utility
+  wal         Commands for interacting with Write-Ahead Log (WAL) files
 
 Options:
       --config-file string   Set the config file
@@ -40,7 +47,7 @@ To get more help with devtool, check out our guides at https://github.com/anthon
 
 ```shell
 # 注意Go版本大于等于1.18
-go install -v github.com/anthony-dong/golang/cli/devtool@latest
+CGO_ENABLED=1 go install -v github.com/anthony-dong/golang/cli/devtool@latest
 ```
 
 2. release 下载 https://github.com/anthony-dong/golang/releases
@@ -77,10 +84,6 @@ sudo apt-get install -y libpcap-dev
 ## [任务模版工具 - run](../../command/run)
 
 ## [文件上传工具 - upload](../../command/upload)
-
-## [JSON工具 - json](../../command/jsontool)
-
-## [CPP工具 - cpp](../../command/cpp)
 
 ## [Thrift/HTTPS/HTTP代理和抓包工具](../../command/proxy)
 

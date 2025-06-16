@@ -1,62 +1,30 @@
-# Golang
+# Devtool
 
-# 介绍
-
-本仓库是个人的一个日常学习Golang的一个仓库，内部包含了一些公共库，其中cli工具 `devtool` 方便平时日常开发！devtool是一个强大的cli工具，包罗万象！
-
-# 如何使用
+devtool 是一个强大的开发者工具，其中包含了日常开发中的一些可能涉及到的高频工具，比如编解码工具、抓包工具、发送请求工具、代理工具、文件存储工具等！
 
 ```shell
-go get -v github.com/anthony-dong/golang
-```
+Name: A collection of development tools
 
-# 项目结构
-
-```shell
-➜  golang git:(master) tree -L 1 .
-.
-├── Makefile // 开发脚本
-├── README.md
-├── bin // 二进制产物
-├── build.sh
-├── cli // cli工具
-├── command // 命令
-├── go.mod 
-├── go.sum
-└── pkg
-    ├── bufutils
-    ├── codec // 编解码
-    ├── collections // 集合
-    ├── consts // 常量
-    ├── httpclient // http client
-    ├── idl // idl
-    ├── internal // 内部包
-    ├── logs // 日志
-    ├── rpc // rpc 调用
-    ├── tcpdump // tcpduump
-    ├── tools // 外部工具
-    └── utils // 工具
-```
-
-# [devtool](cli/devtool)
-
-如何下载:  `go install -v github.com/anthony-dong/golang/cli/devtool@master`  或者参考[此文档](cli/devtool)
-
-```shell
-➜  devtool git:(master) devtool --help
 Usage: devtool [OPTIONS] COMMAND
 
 Commands:
-  codec       The Encode and Decode data tool
-  gen         Auto compile thrift、protobuf IDL
-  go          The golang tools
+  codec       Tools for encoding and decoding data in various formats
+  codegen     Generate code from IDL files (Thrift, Protobuf)
+  curl        Send Thrift requests similar to cURL
+  diff        Diff utilities for various data formats
+  git         Git related tools and utilities
+  golang      Go language related tools and utilities
   help        Help about any command
-  hexo        The Hexo tool
-  json        The Json tool
-  run         Run task templates
-  tcpdump     Decode tcpdump file & stream
-  turl        Send thrift request like curl
-  upload      File upload tool
+  hexo        Hexo static site generator tools
+  mock        Generate mock data for various formats
+  proxy       HTTP/HTTPS, Thrift, and FileSystem proxy tools
+  run         Run tasks defined in template files
+  static      Serve static files
+  strace      Trace system calls and signals
+  tcp         TCP related tools
+  trimer      Trim or filter data from various formats
+  upload      File upload utility
+  wal         Commands for interacting with Write-Ahead Log (WAL) files
 
 Options:
       --config-file string   Set the config file
@@ -70,47 +38,48 @@ Use "devtool COMMAND --help" for more information about a command.
 To get more help with devtool, check out our guides at https://github.com/anthony-dong/golang
 ```
 
-# [tcpdump_tools](cli/tcpdump_tools)
-
-1. 安装
+# 如何下载
 
 ```shell
-CGO_ENABLED=1 go install -v github.com/anthony-dong/golang/cli/tcpdump_tools@master
+# 注意Go版本大于等于1.18
+CGO_ENABLED=1 go install -v github.com/anthony-dong/golang/cli/devtool@latest
 ```
 
-2. 使用
+> 备注：由于依赖了 libpcap，如果执行失败请执行以下命令
 
 ```shell
-~ tcpdump_tools -h
-decode tcpdump file, help doc: https://github.com/anthony-dong/golang/tree/master/cli/tcpdump_tools
+# 1. update
+sudo apt update
 
-Usage:
-  tcpdump_tools [-r file] [-v] [-X] [--max dump size] [flags]
-
-Examples:
-  tcpdump 'port 8080' -X -l -n | tcpdump_tools
-
-Flags:
-  -X, --dump          Enable Display payload details with hexdump.
-  -r, --file string   The packets file, eg: tcpdump_xxx_file.pcap.
-  -h, --help          help for tcpdump_tools
-      --max int       The hexdump max size
-  -v, --verbose       Enable Display decoded details.
+# 2. install
+sudo apt-get install -y libpcap-dev
 ```
 
-# protoc-gen-console
+# 配置文件
 
-> 将protoc输出到文件中
+优先级顺序：
 
-1. 安装
+1. 读取  `--config-file` 参数传递的配置文件地址
+2. 读取 `$(pwd)/.devtool.yaml`
+3. 读取 `dirname($0)/.devtool.yaml`
+4. 读取 `$HOME/.devtool/config.yaml`
 
-```shell
-go install -v github.com/anthony-dong/golang/cli/protoc-gen-console@master
-```
+类型定义：[config.go](../../command/config.go)
 
-2. 使用
+# 工具介绍
 
-```shell
-protoc -I . --plugin=protoc-gen-console=${HOME}/go/bin/protoc-gen-console --console_opt=output=output/out.
-json  --console_opt=disable_source_code=1  --console_opt=params1=1,params2=2  --console_out=. pkg/idl/test/text.proto
-```
+## [编解码工具 - codec ](./command/codec)
+
+## [Go开发工具 - golang](./command/golang)
+
+## [写博客工具 - hexo](./command/hexo)
+
+## [流量解析工具 - tcpdump](./command/tcpdump)
+
+## [任务模版工具 - run](./command/run)
+
+## [文件上传工具 - upload](./command/upload)
+
+## [Thrift/HTTPS/HTTP代理和抓包工具](./command/proxy)
+
+## [像curl一样发起Thrift请求](./command/curl)
